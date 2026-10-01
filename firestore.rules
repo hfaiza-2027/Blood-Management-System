@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function self(uid) { return signedIn() && request.auth.uid == uid; }
+    function admin() { return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'; }
+
+    match /users/{uid} {
+      allow read: if self(uid) || admin();
+      // Members can never grant themselves a role, status or verification.
+      allow create: if self(uid)
+        && request.resource.data.role == 'user'
+        && request.resource.data.status == 'active'
+        && request.resource.data.verified == false;
+      allow update: if admin()
+        || (self(uid) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'verified']));
+      allow delete: if admin();
+    }
+
+    match /donors/{id} {
+      allow read: if signedIn() && (admin() || resource.data.userId == request.auth.uid);
+      allow create: if signedIn() && (admin() || request.resource.data.userId == request.auth.uid);
+      allow update: if signedIn() && (admin() || resource.data.userId == request.auth.uid);
+      allow delete: if admin();
+    }
+
+    match /bloodRequests/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.requesterId == request.auth.uid;
+      allow update: if signedIn() && (admin() || resource.data.requesterId == request.auth.uid);
+      allow delete: if admin();
+    }
+
+    match /donations/{id} {
+      allow read: if signedIn() && (admin() || resource.data.donorId == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.donorId == request.auth.uid;
+      allow update: if signedIn() && (admin() || resource.data.donorId == request.auth.uid);
+      allow delete: if admin();
+    }
+
+    match /hospitals/{id} {
+      allow read: if true;
+      allow write: if admin();
+    }
+
+    match /locations/{id} {
+      allow read: if true;
+      allow write: if admin();
+    }
+
+    match /inventory/{id} {
+      allow read: if true;
+      allow write: if admin();
+    }
+
+    match /notifications/{id} {
+      allow read: if signedIn() && (admin() || resource.data.userId == request.auth.uid);
+      allow update: if signedIn() && (admin() || resource.data.userId == request.auth.uid);
+      allow create: if admin();
+      allow delete: if admin();
+    }
+
+    match /activity/{id} { allow read, write: if admin(); }
+    match /broadcasts/{id} { allow read, write: if admin(); }
+    match /settings/{id} { allow read, write: if admin(); }
+    match /donorContacts/{id} { allow read, write: if signedIn() && (admin() || resource.data.requesterId == request.auth.uid); }
+  }
+}
