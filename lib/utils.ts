@@ -30,8 +30,9 @@ export function formatDate(d: string | Date, opts?: Intl.DateTimeFormatOptions):
   return new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, ...(opts ?? { day: "numeric", month: "short", year: "numeric" }) }).format(new Date(d));
 }
 
+/** "17 Oct, 2:30 pm" (12-hour clock, Pakistan time). */
 export function formatDateTime(d: string | Date): string {
-  return new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(d));
+  return new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(d));
 }
 
 export function timeAgo(d: string | Date, from: Date = now()): string {
@@ -92,4 +93,27 @@ export function maskPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   if (digits.length < 6) return "•••";
   return `${digits.slice(0, 4)} ••• ••${digits.slice(-2)}`;
+}
+
+/** "14:30" → "2:30 PM" (12-hour clock, as people in Pakistan usually read times). */
+export function formatTime12(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return hhmm;
+  const suffix = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 === 0 ? 12 : h % 12;
+  return `${hour}:${String(m).padStart(2, "0")} ${suffix}`;
+}
+
+/** Joins address parts, skipping blanks and repeats ("Lahore, Lahore" → "Lahore"). */
+export function joinPlace(...parts: (string | undefined | null)[]): string {
+  const seen = new Set<string>();
+  return parts
+    .map((p) => (p ?? "").trim())
+    .filter((p) => p && !seen.has(p.toLowerCase()) && seen.add(p.toLowerCase()))
+    .join(", ");
+}
+
+/** "Johar Town, Lahore", or just "Lahore" when the area is missing. */
+export function formatPlace(loc?: { area?: string; city?: string } | null): string {
+  return joinPlace(loc?.area, loc?.city) || "Not set";
 }

@@ -14,7 +14,7 @@ import { useToast } from "@/components/ui/Toast";
 import { EligibilityResultCard } from "@/components/blood/EligibilityResult";
 import { donationService } from "@/services/donationService";
 import { formatDistance } from "@/lib/geo";
-import { addDays, cn, formatDate } from "@/lib/utils";
+import { addDays, cn, formatDate, formatTime12, joinPlace } from "@/lib/utils";
 
 const STEPS = ["Eligibility", "Donation centre", "Appointment", "Confirmation"] as const;
 const CHECKS = [
@@ -24,6 +24,7 @@ const CHECKS = [
   "I have eaten a meal in the last 4 hours",
   "I will bring my CNIC",
 ];
+/** Pakistan time. Values stay 24-hour for the server; people see 12-hour AM/PM. 12:30–2:00 PM is the lunch break. */
 const TIMES = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "14:00", "14:30", "15:00", "15:30", "16:00"];
 const TYPE_LABEL: Record<FacilityType, string> = { hospital: "Hospital", blood_bank: "Blood bank", donation_center: "Donation centre" };
 
@@ -31,6 +32,13 @@ interface Props { sites: Hospital[]; eligibility: EligibilityResult; today: stri
 
 function isoDate(d: Date) {
   return d.toISOString().slice(0, 10);
+}
+
+/** Current time in Pakistan as "YYYY-MM-DD" and "HH:MM", so slots that have already passed today can be disabled. */
+function nowInPakistan() {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  return { date: `${get("year")}-${get("month")}-${get("day")}`, time: `${get("hour")}:${get("minute")}` };
 }
 
 export function DonateFlow({ sites, eligibility, today }: Props) {
@@ -67,10 +75,12 @@ export function DonateFlow({ sites, eligibility, today }: Props) {
 
   async function book() {
     const e: typeof err = {};
+    const pk = nowInPakistan();
     if (!date) e.date = "Choose a date.";
     else if (date < earliest) e.date = `The earliest date you can book is ${formatDate(earliest)}.`;
     else if (date > latest) e.date = "Appointments open up to 60 days ahead.";
     if (!time) e.time = "Choose a time.";
+    else if (date === pk.date && time <= pk.time) e.time = "That time has already passed. Choose a later slot.";
     setErr(e);
     if (Object.keys(e).length) return;
     setLoading(true);
@@ -153,7 +163,7 @@ export function DonateFlow({ sites, eligibility, today }: Props) {
                       <Badge tone="muted" dot={false}>{TYPE_LABEL[s.type]}</Badge>
                       {s.distanceKm !== undefined && <Badge tone="neutral" dot={false}>{formatDistance(s.distanceKm)}</Badge>}
                     </div>
-                    <p className="mt-2 flex items-start gap-1.5 text-[13px] text-ink-500"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />{s.address}, {s.city}</p>
+                    <p className="mt-2 flex items-start gap-1.5 text-[13px] text-ink-500"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />{joinPlace(s.address, s.area, s.city)}</p>
                     <p className="mt-1 flex items-center gap-1.5 text-[13px] text-ink-500"><Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />{s.openingHours}</p>
                   </button>
                 );
@@ -176,12 +186,16 @@ export function DonateFlow({ sites, eligibility, today }: Props) {
               <Alert tone="warn">Your usual 90-day interval ends on {formatDate(earliest)}, so dates before then aren&apos;t available.</Alert>
             )}
             <div className="grid gap-4 sm:grid-cols-2">
-              <Input id="date" label="Date" type="date" min={earliest} max={latest} value={date} onChange={(e) => { setDate(e.target.value); setErr((x) => ({ ...x, date: undefined })); }} error={err.date} />
-              <Select id="time" label="Time" value={time} onChange={(e) => { setTime(e.target.value); setErr((x) => ({ ...x, time: undefined })); }} error={err.time}>
+              <Input id="date" label="Date" type="date" min={earliest} max={latest} value={date} onChange={(e) => { setDate(e.target.value); setTime(""); setErr((x) => ({ ...x, date: undefined })); }} error={err.date} />
+              <Select id="time" label="Time" value={time} onChange={(e) => { setTime(e.target.value); setErr((x) => ({ ...x, time: undefined })); }} error={err.time} hint="Pakistan time. Closed 12:30 to 2:00 PM for lunch.">
                 <option value="">Choose a time</option>
-                {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
+                {TIMES.map((t) => {
+                  const pk = nowInPakistan();
+                  const past = date === pk.date && t <= pk.time;
+                  return <option key={t} value={t} disabled={past}>{formatTime12(t)}{past ? " (passed)" : ""}</option>;
+                })}
               </Select>
-              <Input id="location" label="Location" value={`${center.address}, ${center.city}`} readOnly wrapperClassName="sm:col-span-2" />
+              <Input id="location" label="Location" value={joinPlace(center.address, center.area, center.city)} readOnly wrapperClassName="sm:col-span-2" />
             </div>
             <div className="flex justify-between">
               <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
@@ -201,8 +215,8 @@ export function DonateFlow({ sites, eligibility, today }: Props) {
             </div>
             <dl className="mx-auto grid max-w-lg gap-3 rounded-card border border-line bg-paper p-4 text-left text-sm sm:grid-cols-2">
               <div><dt className="text-xs text-ink-400">Date</dt><dd className="font-medium text-ink-900">{formatDate(date)}</dd></div>
-              <div><dt className="text-xs text-ink-400">Time</dt><dd className="font-medium text-ink-900">{time}</dd></div>
-              <div className="sm:col-span-2"><dt className="text-xs text-ink-400">Location</dt><dd className="flex items-start gap-1.5 font-medium text-ink-900"><Building2 className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" aria-hidden />{center.name}, {center.address}, {center.city}</dd></div>
+              <div><dt className="text-xs text-ink-400">Time</dt><dd className="font-medium text-ink-900">{formatTime12(time)}</dd></div>
+              <div className="sm:col-span-2"><dt className="text-xs text-ink-400">Location</dt><dd className="flex items-start gap-1.5 font-medium text-ink-900"><Building2 className="mt-0.5 h-4 w-4 shrink-0 text-ink-400" aria-hidden />{joinPlace(center.name, center.address, center.area, center.city)}</dd></div>
               <div className="sm:col-span-2"><dt className="text-xs text-ink-400">Centre phone</dt><dd className="flex items-center gap-1.5 font-medium text-ink-900"><Phone className="h-4 w-4 text-ink-400" aria-hidden />{center.phone}</dd></div>
             </dl>
             <p className="mx-auto max-w-md text-[13px] text-ink-500">Drink plenty of water, eat a proper meal and bring your CNIC. Screening staff will confirm your eligibility on arrival.</p>
