@@ -173,7 +173,7 @@ export function AppShell({ variant, user, unread = 0, badges, children }: { vari
                   <Avatar name={user.name} size="sm" />
                   <span className="hidden text-left sm:block">
                     <span className="block text-[13px] font-semibold leading-tight text-ink-900">{user.name}</span>
-                    <span className="block text-[11px] leading-tight text-ink-500">{variant === "admin" ? "Administrator" : `Donor${user.bloodGroup ? `, ${user.bloodGroup}` : ""}`}</span>
+                    <span className="block text-[11px] leading-tight text-ink-500">{variant === "admin" ? "Administrator" : `${user.role === "donor" ? "Donor" : "Member"}${user.bloodGroup ? `, ${user.bloodGroup}` : ""}`}</span>
                   </span>
                   <ChevronDown className="hidden h-4 w-4 text-ink-400 sm:block" aria-hidden />
                 </button>

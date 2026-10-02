@@ -8,6 +8,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
+import { Alert } from "@/components/ui/Alert";
 import { EligibilityResultCard } from "@/components/blood/EligibilityResult";
 import { donorService } from "@/services/donorService";
 import { checkEligibility } from "@/lib/eligibility";
@@ -111,6 +112,9 @@ export function DonorRegistrationForm({ user }: { user: User }) {
   return (
     <form onSubmit={submit} noValidate className="grid gap-6 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
+        <Alert tone="info" title="What donors usually need" className="lg:hidden">
+          Aged 18 to 60, weight 50 kg or more, 90 days since your last whole-blood donation, and your CNIC on the day.
+        </Alert>
         <Card>
           <CardHeader title="About you" description="Pre-filled from your account. Update anything that's changed." />
           <CardBody className="grid gap-4 sm:grid-cols-2">
@@ -195,9 +199,28 @@ export function DonorRegistrationForm({ user }: { user: User }) {
             </Field>
           </CardBody>
         </Card>
+
+        {/* The submit action sits at the end of the form, where people finish filling it in. */}
+        <Card>
+          <CardBody className="space-y-4">
+            {showResult && (
+              <div className="lg:hidden">
+                <EligibilityResultCard result={result} />
+              </div>
+            )}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[13px] text-ink-600">
+                By registering you agree to be contacted about requests near you. You can pause availability at any time.
+              </p>
+              <Button type="submit" size="lg" className="w-full shrink-0 sm:w-auto" loading={loading} loadingText="Registering…">
+                Register as a donor
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
       </div>
 
-      <div className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+      <div className="hidden space-y-4 lg:sticky lg:top-20 lg:block lg:self-start">
         <Card>
           <CardHeader title="Your eligibility" as="h3" />
           <CardBody>
@@ -219,7 +242,6 @@ export function DonorRegistrationForm({ user }: { user: User }) {
             </ul>
           </CardBody>
         </Card>
-        <Button type="submit" className="w-full" loading={loading} loadingText="Registering…">Register as a donor</Button>
       </div>
     </form>
   );
