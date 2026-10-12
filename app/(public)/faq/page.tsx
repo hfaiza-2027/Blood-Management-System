@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { faqGroups } from "@/lib/faq";
 
-export const metadata: Metadata = { title: "FAQ", description: "Answers about donating blood, requesting blood and privacy on Qatra." };
+export const metadata: Metadata = { title: "FAQ", description: "Answers about donating blood, requesting blood and privacy on BloodBridge." };
 
 export default function FaqPage() {
   return (

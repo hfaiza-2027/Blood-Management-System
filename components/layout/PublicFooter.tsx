@@ -4,7 +4,7 @@ import { Logo } from "./Logo";
 const cols = [
   { title: "Donors", links: [["Become a donor", "/auth/register"], ["Book a donation", "/dashboard/donate"], ["Eligibility", "/faq#eligibility"], ["Find a centre", "/dashboard/donate"]] },
   { title: "Patients and families", links: [["Request blood", "/dashboard/request"], ["Find donors", "/dashboard/donors"], ["Emergency requests", "/dashboard/blood-requests?tab=emergency"]] },
-  { title: "Qatra", links: [["About", "/about"], ["FAQ", "/faq"], ["Contact", "/contact"], ["Hospital partners", "/contact#partners"]] },
+  { title: "BloodBridge", links: [["About", "/about"], ["FAQ", "/faq"], ["Contact", "/contact"], ["Hospital partners", "/contact#partners"]] },
 ];
 
 export function PublicFooter() {
@@ -35,7 +35,7 @@ export function PublicFooter() {
       </div>
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-[13px] sm:flex-row sm:justify-between sm:px-6">
-          <p>© 2026 Qatra Blood Network. Demonstration build with fictional data.</p>
+          <p>© 2026 BloodBridge. Connecting blood donors with patients across Pakistan.</p>
           <p>Eligibility guidance on this site is not medical advice.</p>
         </div>
       </div>

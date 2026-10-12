@@ -8,7 +8,7 @@ const LIVE = Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
  */
 export function middleware(req: NextRequest) {
   if (!LIVE) return NextResponse.next();
-  const hasSession = Boolean(req.cookies.get("qatra_session")?.value);
+  const hasSession = Boolean(req.cookies.get("bloodbridge_session")?.value);
   if (!hasSession) {
     const url = req.nextUrl.clone();
     url.pathname = "/auth/login";

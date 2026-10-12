@@ -11,6 +11,6 @@ const STATUS: Record<string, number> = {
 export function jsonError(e: unknown, label: string) {
   const message = e instanceof Error ? e.message : "Request failed";
   const status = STATUS[message] ?? (message.startsWith("Unsupported data action") ? 404 : 400);
-  if (!(message in STATUS)) console.error(`[qatra] ${label} failed:`, e);
+  if (!(message in STATUS)) console.error(`[BloodBridge] ${label} failed:`, e);
   return NextResponse.json({ error: message }, { status });
 }

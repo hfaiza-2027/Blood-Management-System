@@ -1,6 +1,6 @@
 import type { BloodGroup, RequestStatus, Urgency, DonorAvailability, StockLevel, DonationStatus } from "@/types";
 
-export const APP_NAME = "Qatra";
+export const APP_NAME = "BloodBridge";
 export const APP_TAGLINE = "Blood donation and request network";
 
 export const BLOOD_GROUPS: BloodGroup[] = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];

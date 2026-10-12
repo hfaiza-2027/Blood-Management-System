@@ -1,10 +1,10 @@
-# Qatra Firebase Setup — Step by Step
+# BloodBridge Firebase Setup — Step by Step
 
 ## A. Firebase project
 
 1. Open Firebase Console.
 2. Create a project.
-3. Go to **Project settings → Your apps → Web app** and register Qatra.
+3. Go to **Project settings → Your apps → Web app** and register BloodBridge.
 4. Copy the Web SDK values into `.env.local`.
 5. Go to **Authentication → Sign-in method → Email/Password** and enable it.
 6. Go to **Firestore Database → Create database**.
@@ -44,7 +44,7 @@ You can also paste the rules manually into Firebase Console → Firestore Databa
 
 ```json
 {
-  "fullName": "Qatra Admin",
+  "fullName": "BloodBridge Admin",
   "email": "admin@example.com",
   "phone": "03001234567",
   "bloodGroup": "A+",
@@ -97,12 +97,12 @@ firebase deploy --only firestore:rules,firestore:indexes
 
 ## E4. Password reset link (optional)
 
-Firebase's default reset email opens a Firebase-hosted page, which works as is. To use Qatra's own page instead, set the action URL in **Authentication → Templates → Password reset → Customise action URL** to `http://localhost:3000/auth/reset-password` (your domain in production).
+Firebase's default reset email opens a Firebase-hosted page, which works as is. To use BloodBridge's own page instead, set the action URL in **Authentication → Templates → Password reset → Customise action URL** to `http://localhost:3000/auth/reset-password` (your domain in production).
 
 ## F. Important testing sequence
 
 1. Create the admin account.
-2. Start Qatra.
+2. Start BloodBridge.
 3. Log in as admin and confirm `/admin` opens.
 4. Create a normal account using `/auth/register`.
 5. Confirm the user document appears under `users/{uid}`.

@@ -6,7 +6,7 @@
 import { adminDb } from "./admin";
 import { currentSessionUser, executeDataAction } from "@/lib/server/execute";
 
-globalThis.__qatraServer = {
+globalThis.__bloodbridgeServer = {
   configured: Boolean(adminDb),
   exec: executeDataAction,
   currentUser: currentSessionUser,

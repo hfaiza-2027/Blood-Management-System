@@ -17,7 +17,7 @@ import { BloodGroupBadge } from "@/components/ui/BloodGroupBadge";
 import { RequestStatusBadge, UrgencyBadge } from "@/components/ui/StatusBadge";
 import { BLOOD_GROUPS, canDonateTo } from "@/lib/constants";
 import { formatDistance } from "@/lib/geo";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime, formatPlace } from "@/lib/utils";
 
 export type RequestTab = "all" | "nearby" | "emergency" | "mine" | "fulfilled";
 const OPEN = ["pending", "approved", "matching", "donor_found", "partially_fulfilled"];
@@ -74,7 +74,7 @@ export function RequestsBoard({ requests, userId, userGroup, initialTab, respond
     { key: "group", header: "Blood group", cell: (r) => <BloodGroupBadge group={r.bloodGroup} size="sm" />, hideOnCard: true },
     { key: "units", header: "Units", cell: (r) => <span className="tabular-nums">{r.unitsFulfilled}/{r.unitsRequired}</span> },
     { key: "hospital", header: "Hospital", cell: (r) => <span className="block max-w-[14rem] truncate">{r.hospitalName}</span> },
-    { key: "location", header: "Location", cell: (r) => `${r.location.area}, ${r.location.city}` },
+    { key: "location", header: "Location", cell: (r) => formatPlace(r.location) },
     { key: "distance", header: "Distance", cell: (r) => <span className="tabular-nums">{formatDistance(r.distanceKm)}</span> },
     { key: "urgency", header: "Urgency", cell: (r) => <UrgencyBadge urgency={r.urgency} /> },
     { key: "date", header: "Required by", cell: (r) => formatDateTime(r.requiredBy) },

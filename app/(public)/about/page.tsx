@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/ui/Button";
 
-export const metadata: Metadata = { title: "About", description: "Why Qatra exists and how the blood network is run." };
+export const metadata: Metadata = { title: "About", description: "Why BloodBridge exists and how the blood network is run." };
 
 const principles = [
   { t: "Patients first", b: "Every design decision starts with the family standing in a hospital corridor at night, looking for one more donor." },
   { t: "Donor privacy by default", b: "Donors are shown by area and approximate distance only. Contact details are shared one request at a time, with consent." },
-  { t: "Hospitals decide medically", b: "Qatra gives guidance on eligibility, but screening and cross-matching always happen at the blood bank." },
+  { t: "Hospitals decide medically", b: "BloodBridge gives guidance on eligibility, but screening and cross-matching always happen at the blood bank." },
   { t: "Free, always", b: "The network is free for donors and patients. We never sell data or accept payment to prioritise requests." },
 ];
 
@@ -20,7 +20,7 @@ export default function AboutPage() {
             In most Pakistani hospitals, a patient&apos;s family is still asked to arrange replacement donors. That means phone trees, WhatsApp forwards and waiting — often at the moment people can least afford it.
           </p>
           <p>
-            Qatra started in Lahore as a volunteer effort to put that search in one place: donors say where they are and when they&apos;re available, hospitals post what they need, and the system connects the two, closest first.
+            BloodBridge started in Lahore as a volunteer effort to put that search in one place: donors say where they are and when they&apos;re available, hospitals post what they need, and the system connects the two, closest first.
           </p>
           <p>
             Today the network works with blood banks and hospitals in five cities. Coordinators verify donors, review emergency requests and keep stock levels current, so the numbers you see reflect what&apos;s actually on the shelf.

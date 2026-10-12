@@ -22,7 +22,7 @@ const DEFAULT_FLAGS: Flags = { manualApproval: true, requireVerifiedDonors: fals
 
 export function AdminSettings({ initial, status }: { initial?: StoredSettings | null; status?: SystemStatus | null }) {
   const toast = useToast();
-  const [general, setGeneral] = useState<General>({ orgName: `${APP_NAME} Blood Network`, supportEmail: "help@qatra.pk", helpline: "042 111 782 872", defaultCity: "Lahore", ...(initial?.general ?? {}) });
+  const [general, setGeneral] = useState<General>({ orgName: `${APP_NAME} Blood Network`, supportEmail: "help@bloodbridge.pk", helpline: "042 111 782 872", defaultCity: "Lahore", ...(initial?.general ?? {}) });
   const [matching, setMatching] = useState<Matching>({ radiusKm: "10", emergencyRadiusKm: "25", intervalDays: String(DONATION_INTERVAL_DAYS), expireHours: "72", maxAlerts: "3", ...(initial?.matching ?? {}) });
   const [counts, setCounts] = useState<SystemStatus | null>(status ?? null);
   const [seeding, setSeeding] = useState(false);

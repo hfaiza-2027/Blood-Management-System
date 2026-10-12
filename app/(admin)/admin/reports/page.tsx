@@ -26,7 +26,7 @@ export default async function ReportsPage() {
         title="Reports"
         description="Twelve-month view of donations, requests and fulfilment across the network."
         breadcrumb={[{ label: "Admin", href: "/admin" }, { label: "Reports" }]}
-        actions={<ExportCsvButton filename="qatra-monthly-report.csv" rows={csv} />}
+        actions={<ExportCsvButton filename="bloodbridge-monthly-report.csv" rows={csv} />}
       />
 
       <section aria-label="Report summary" className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">

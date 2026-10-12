@@ -20,7 +20,7 @@ import { AccountStatusBadge, VerificationBadge } from "@/components/ui/StatusBad
 import { EmptyState } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import { BLOOD_GROUPS, CITIES, CITY_NAMES } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatPlace } from "@/lib/utils";
 import { hasErrors, rules, validate, type Errors } from "@/lib/validations";
 
 const ROLE_LABEL: Record<UserRole, string> = { user: "Member", donor: "Donor", admin: "Admin" };
@@ -133,11 +133,11 @@ export function UsersManager({ initial, initialQuery }: { initial: User[]; initi
     { key: "name", header: "Name", sortable: true, hideOnCard: true, cell: (u) => (
       <span className="flex items-center gap-3"><Avatar name={u.fullName} size="sm" /><span className="min-w-0"><span className="block font-medium text-ink-900">{u.fullName}</span>{u.verified && <span className="text-xs text-ok-700">Verified</span>}</span></span>
     ) },
-    { key: "email", header: "Email", cell: (u) => <span className="block max-w-[13rem] truncate">{u.email}</span> },
-    { key: "phone", header: "Phone", cell: (u) => <span className="whitespace-nowrap tabular-nums">{u.phone}</span> },
+    { key: "email", header: "Email", cell: (u) => <span className="block max-w-[13rem] truncate">{u.email || <span className="text-ink-400">Not added</span>}</span> },
+    { key: "phone", header: "Phone", cell: (u) => <span className="whitespace-nowrap tabular-nums">{u.phone || <span className="text-ink-400">Not added</span>}</span> },
     { key: "group", header: "Blood group", sortable: true, cell: (u) => <BloodGroupBadge group={u.bloodGroup} size="sm" /> },
-    { key: "location", header: "Location", sortable: true, cell: (u) => `${u.location.area}, ${u.location.city}` },
-    { key: "role", header: "Role", cell: (u) => <Badge tone={u.role === "admin" ? "info" : "muted"} dot={false}>{ROLE_LABEL[u.role]}</Badge> },
+    { key: "location", header: "Location", sortable: true, cell: (u) => formatPlace(u.location) },
+    { key: "role", header: "Role", cell: (u) => <Badge tone={u.role === "admin" ? "info" : "muted"} dot={false}>{ROLE_LABEL[u.role] ?? u.role}</Badge> },
     { key: "status", header: "Status", cell: (u) => <AccountStatusBadge status={u.status} /> },
     { key: "joined", header: "Joined", sortable: true, cell: (u) => <span className="whitespace-nowrap">{formatDate(u.joinedAt)}</span> },
     { key: "actions", header: "Actions", hideOnCard: true, align: "right", cell: actions },
@@ -175,7 +175,7 @@ export function UsersManager({ initial, initialQuery }: { initial: User[]; initi
         {viewing && (
           <dl className="grid gap-4 text-sm sm:grid-cols-2">
             {[
-              ["Email", viewing.email], ["Phone", viewing.phone], ["Location", `${viewing.location.area}, ${viewing.location.city}`],
+              ["Email", viewing.email], ["Phone", viewing.phone], ["Location", formatPlace(viewing.location)],
               ["Gender", { male: "Male", female: "Female", other: "Other" }[viewing.gender]], ["Date of birth", formatDate(viewing.dateOfBirth)],
             ].map(([k, val]) => (<div key={k}><dt className="text-xs text-ink-400">{k}</dt><dd className="text-ink-900">{val}</dd></div>))}
             <div><dt className="text-xs text-ink-400">Blood group</dt><dd className="mt-0.5"><BloodGroupBadge group={viewing.bloodGroup} size="sm" /></dd></div>

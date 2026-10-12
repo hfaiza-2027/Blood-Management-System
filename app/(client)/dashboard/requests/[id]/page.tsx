@@ -12,7 +12,7 @@ import { RequestTimeline } from "@/components/blood/RequestTimeline";
 import { CancelRequestButton } from "@/modules/client/components/CancelRequestButton";
 import { bloodRequestService, isOpen } from "@/services/bloodRequestService";
 import { canReceiveFrom } from "@/lib/constants";
-import { formatDateTime, maskPhone, timeRemaining } from "@/lib/utils";
+import { formatDateTime, maskPhone, timeRemaining, formatPlace } from "@/lib/utils";
 import { requireUser } from "@/lib/session";
 import { safe } from "@/services/client";
 
@@ -36,7 +36,7 @@ export default async function RequestDetailPage({ params }: P) {
   const rows = [
     { icon: UserRound, label: "Patient", value: `${r.patientName}, ${r.patientAge} years` },
     { icon: Building2, label: "Hospital", value: r.hospitalName },
-    { icon: MapPin, label: "Area", value: `${r.location.area}, ${r.location.city}` },
+    { icon: MapPin, label: "Area", value: formatPlace(r.location) },
     { icon: CalendarClock, label: "Needed by", value: `${formatDateTime(r.requiredBy)}${open && left.hours > 0 ? ` (${left.label})` : ""}` },
     { icon: Phone, label: "Contact number", value: mine ? r.contactNumber : maskPhone(r.contactNumber) },
     { icon: UsersRound, label: "Donors contacted", value: String(r.donorsContacted) },

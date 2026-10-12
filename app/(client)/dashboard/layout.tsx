@@ -6,7 +6,7 @@ import { getSessionUserOrNull } from "@/lib/session";
 import { notificationService } from "@/services/notificationService";
 import { safe } from "@/services/client";
 
-export const metadata: Metadata = { title: { default: "Dashboard", template: "%s | Qatra" } };
+export const metadata: Metadata = { title: { default: "Dashboard", template: "%s | BloodBridge" } };
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   // redirect() works by throwing, so it must stay outside any try/catch.

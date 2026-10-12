@@ -21,7 +21,7 @@ import { EmptyState } from "@/components/ui/States";
 import { RequestTimeline } from "@/components/blood/RequestTimeline";
 import { useToast } from "@/components/ui/Toast";
 import { REQUEST_STATUS_META } from "@/lib/constants";
-import { formatDateTime, now } from "@/lib/utils";
+import { formatDateTime, now, formatPlace } from "@/lib/utils";
 
 type Tab = "review" | "active" | "closed" | "all";
 const ACTIVE: RequestStatus[] = ["approved", "matching", "donor_found", "partially_fulfilled"];
@@ -161,7 +161,7 @@ export function RequestsManager({ initial }: { initial: BloodRequest[] }) {
         {viewing && (
           <div className="grid gap-6 sm:grid-cols-2">
             <dl className="space-y-3 text-sm">
-              {[["Requester", viewing.requesterName], ["Contact", viewing.contactNumber], ["Reason", viewing.reason], ["Required by", formatDateTime(viewing.requiredBy)], ["Location", `${viewing.location.area}, ${viewing.location.city}`], ["Donors contacted", String(viewing.donorsContacted)]].map(([k, v]) => (
+              {[["Requester", viewing.requesterName], ["Contact", viewing.contactNumber], ["Reason", viewing.reason], ["Required by", formatDateTime(viewing.requiredBy)], ["Location", formatPlace(viewing.location)], ["Donors contacted", String(viewing.donorsContacted)]].map(([k, v]) => (
                 <div key={k}><dt className="text-xs text-ink-400">{k}</dt><dd className="text-ink-900">{v}</dd></div>
               ))}
               {viewing.notes && <div><dt className="text-xs text-ink-400">Notes</dt><dd className="text-ink-700">{viewing.notes}</dd></div>}

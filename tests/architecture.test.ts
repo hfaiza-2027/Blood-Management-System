@@ -87,3 +87,8 @@ test("every page folder in the sidebar has a page", () => {
     assert.ok(fs.existsSync(p), `nav link ${h} has no page (${rel(p)})`);
   }
 });
+
+test("Tailwind scans every folder that uses class names", () => {
+  const cfg: string = fs.readFileSync(path.join(ROOT, "tailwind.config.ts"), "utf8");
+  for (const dir of ["app", "components", "modules", "lib"]) assert.ok(cfg.includes(`./${dir}/**`), `tailwind.config.ts content is missing ./${dir}/**`);
+});

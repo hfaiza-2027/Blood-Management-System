@@ -1,4 +1,4 @@
-/* In-memory stand-in for firebase-admin/firestore (only what Qatra uses). */
+/* In-memory stand-in for firebase-admin/firestore (only what BloodBridge uses). */
 class Timestamp {
   constructor(ms) { this.ms = ms; }
   toDate() { return new Date(this.ms); }

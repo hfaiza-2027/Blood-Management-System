@@ -16,7 +16,7 @@ export function Logo({ href = "/", tone = "dark", sub }: { href?: string; tone?:
     <Link href={href} className="inline-flex items-center gap-2.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hemo-500">
       <LogoMark />
       <span className="flex flex-col leading-none">
-        <span className={cn("font-display text-[19px] font-bold tracking-tight", tone === "dark" ? "text-ink-900" : "text-white")}>Qatra</span>
+        <span className={cn("font-display text-[19px] font-bold tracking-tight", tone === "dark" ? "text-ink-900" : "text-white")}>BloodBridge</span>
         {sub && <span className={cn("mt-0.5 text-[11px] font-medium", tone === "dark" ? "text-ink-400" : "text-ink-300")}>{sub}</span>}
       </span>
     </Link>

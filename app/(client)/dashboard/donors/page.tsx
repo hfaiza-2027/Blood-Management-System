@@ -5,6 +5,7 @@ import { DonorSearch, type DonorSearchInitial } from "@/modules/client/component
 import { requireUser } from "@/lib/session";
 import { BLOOD_GROUPS, CITY_NAMES } from "@/lib/constants";
 import type { BloodGroup } from "@/types";
+import { formatPlace } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Find donors" };
 
@@ -28,7 +29,7 @@ export default async function FindDonorsPage({ searchParams }: { searchParams: P
         breadcrumb={[{ label: "Dashboard", href: "/dashboard" }, { label: "Find donors" }]}
         actions={<ButtonLink href="/dashboard/request" variant="outline">Post a request instead</ButtonLink>}
       />
-      <DonorSearch origin={user.location.point} originLabel={`${user.location.area}, ${user.location.city}`} initial={initial} />
+      <DonorSearch origin={user.location.point} originLabel={formatPlace(user.location)} initial={initial} />
     </>
   );
 }

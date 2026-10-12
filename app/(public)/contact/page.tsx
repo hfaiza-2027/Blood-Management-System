@@ -3,7 +3,7 @@ import { Mail, MapPin, Phone, Siren } from "lucide-react";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { Alert } from "@/components/ui/Alert";
 
-export const metadata: Metadata = { title: "Contact", description: "Contact Qatra coordinators or become a partner hospital." };
+export const metadata: Metadata = { title: "Contact", description: "Contact BloodBridge coordinators or become a partner hospital." };
 
 export default function ContactPage() {
   return (
@@ -21,11 +21,11 @@ export default function ContactPage() {
           <ul className="space-y-5 text-sm">
             <li className="flex gap-3"><Siren className="mt-0.5 h-4 w-4 text-hemo-600" aria-hidden /><span><span className="block font-semibold text-ink-900">24-hour emergency line</span>042 3500 0000</span></li>
             <li className="flex gap-3"><Phone className="mt-0.5 h-4 w-4 text-ink-500" aria-hidden /><span><span className="block font-semibold text-ink-900">Coordinators</span>042 3500 1234, 9:00 – 18:00 Mon – Sat</span></li>
-            <li className="flex gap-3"><Mail className="mt-0.5 h-4 w-4 text-ink-500" aria-hidden /><span><span className="block font-semibold text-ink-900">Email</span>help@qatra.pk</span></li>
+            <li className="flex gap-3"><Mail className="mt-0.5 h-4 w-4 text-ink-500" aria-hidden /><span><span className="block font-semibold text-ink-900">Email</span>help@bloodbridge.pk</span></li>
             <li className="flex gap-3"><MapPin className="mt-0.5 h-4 w-4 text-ink-500" aria-hidden /><span><span className="block font-semibold text-ink-900">Office</span>2nd floor, 91-E Johar Town, Lahore</span></li>
           </ul>
           <div className="border-t border-line pt-8">
-            <h2 className="font-semibold text-ink-900">Partner with Qatra</h2>
+            <h2 className="font-semibold text-ink-900">Partner with BloodBridge</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink-600">Hospitals, blood banks and donation centres get a free coordinator console: live stock, request management and direct alerts to verified donors nearby. Choose &ldquo;Hospital or blood bank partnership&rdquo; in the form.</p>
           </div>
         </div>

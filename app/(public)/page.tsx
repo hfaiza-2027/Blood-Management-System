@@ -26,7 +26,7 @@ const reasons = [
 ];
 
 const testimonials = [
-  { quote: "My son has thalassaemia and needs blood every three weeks. Before Qatra I spent whole nights phoning relatives. Now donors near the blood bank reply within the hour.", name: "Nadia Perveen", role: "Mother, Model Town" },
+  { quote: "My son has thalassaemia and needs blood every three weeks. Before BloodBridge I spent whole nights phoning relatives. Now donors near the blood bank reply within the hour.", name: "Nadia Perveen", role: "Mother, Model Town" },
   { quote: "I got an alert for O-negative at 2 a.m., six minutes from my flat. The patient was a road accident victim. I've donated four times since.", name: "Hira Nadeem", role: "Donor, DHA Lahore" },
   { quote: "Coordinators used to keep donor lists in spreadsheets. Seeing live stock and matched donors on one screen has cut our emergency response time in half.", name: "Dr. Kamran Javed", role: "Transfusion officer, Ravi Valley General" },
 ];

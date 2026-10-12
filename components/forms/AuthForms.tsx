@@ -65,7 +65,7 @@ export function LoginForm() {
 
   return (
     <>
-      <Heading title="Log in to Qatra" sub={<>New here? <Link href="/auth/register" className="font-semibold text-hemo-700 hover:underline">Create an account</Link></>} />
+      <Heading title="Log in to BloodBridge" sub={<>New here? <Link href="/auth/register" className="font-semibold text-hemo-700 hover:underline">Create an account</Link></>} />
       {formError && <Alert tone="danger" className="mb-6">{formError}</Alert>}
       <form onSubmit={submit} noValidate className="space-y-5">
         <Input id="email" label="Email" type="email" autoComplete="email" value={v.email} onChange={(e) => setV({ ...v, email: e.target.value })} error={errors.email} required />
@@ -80,7 +80,7 @@ export function LoginForm() {
       {!firebaseConfigured && (
         <div className="mt-8 rounded-card border border-dashed border-line bg-paper p-4 text-[13px] text-ink-600">
           <p className="font-semibold text-ink-800">Demo mode</p>
-          <p className="mt-1">Any email and password opens the donor dashboard. Use an address ending in <span className="font-semibold">@qatra.pk</span> for the admin console.</p>
+          <p className="mt-1">Any email and password opens the donor dashboard. Use an address ending in <span className="font-semibold">@bloodbridge.pk</span> for the admin console.</p>
         </div>
       )}
     </>

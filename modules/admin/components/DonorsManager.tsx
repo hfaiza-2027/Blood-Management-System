@@ -20,7 +20,7 @@ import { AvailabilityBadge, VerificationBadge } from "@/components/ui/StatusBadg
 import { EmptyState } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import { BLOOD_GROUPS } from "@/lib/constants";
-import { daysBetween, formatDate, now } from "@/lib/utils";
+import { daysBetween, formatDate, now, formatPlace } from "@/lib/utils";
 
 export function DonorsManager({ initial }: { initial: Donor[] }) {
   const toast = useToast();
@@ -142,7 +142,7 @@ export function DonorsManager({ initial }: { initial: Donor[] }) {
   const columns: Column<Donor>[] = [
     { key: "name", header: "Donor", sortable: true, hideOnCard: true, cell: (d) => <span className="font-medium text-ink-900">{d.name}</span> },
     { key: "group", header: "Blood group", cell: (d) => <BloodGroupBadge group={d.bloodGroup} size="sm" /> },
-    { key: "location", header: "Location", cell: (d) => `${d.location.area}, ${d.location.city}` },
+    { key: "location", header: "Location", cell: (d) => formatPlace(d.location) },
     { key: "availability", header: "Availability", cell: (d) => <AvailabilityBadge value={d.availability} /> },
     { key: "verification", header: "Verification", cell: (d) => <VerificationBadge value={d.verification} /> },
     { key: "last", header: "Last donation", sortable: true, cell: (d) => (d.lastDonationDate ? <span className="whitespace-nowrap">{formatDate(d.lastDonationDate)}</span> : <span className="text-ink-400">Never</span>) },
@@ -190,7 +190,7 @@ export function DonorsManager({ initial }: { initial: Donor[] }) {
         <Pagination page={list.page} pageSize={list.pageSize} total={list.total} onChange={list.setPage} label="donors" />
       </Card>
 
-      <Modal open={viewing !== null} onClose={() => setViewing(null)} title={viewing?.name ?? ""} description={viewing ? `${viewing.location.area}, ${viewing.location.city}` : undefined}>
+      <Modal open={viewing !== null} onClose={() => setViewing(null)} title={viewing?.name ?? ""} description={viewing ? formatPlace(viewing.location) : undefined}>
         {viewing && (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2"><BloodGroupBadge group={viewing.bloodGroup} /><AvailabilityBadge value={viewing.availability} /><VerificationBadge value={viewing.verification} /></div>

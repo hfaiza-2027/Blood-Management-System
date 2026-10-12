@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     });
     return response;
   } catch (e) {
-    console.error("[qatra] session creation failed:", e);
+    console.error("[BloodBridge] session creation failed:", e);
     return NextResponse.json({ error: "We couldn't start your session. Log in again." }, { status: 401 });
   }
 }

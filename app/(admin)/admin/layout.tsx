@@ -7,7 +7,7 @@ import { notificationService } from "@/services/notificationService";
 import { bloodRequestService } from "@/services/bloodRequestService";
 import { safe } from "@/services/client";
 
-export const metadata: Metadata = { title: { default: "Admin", template: "%s | Qatra Admin" } };
+export const metadata: Metadata = { title: { default: "Admin", template: "%s | BloodBridge Admin" } };
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   // redirect() works by throwing, so it must stay outside any try/catch.

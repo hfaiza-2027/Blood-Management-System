@@ -1,5 +1,15 @@
 # Changes
 
+## Version 4: renamed to BloodBridge
+
+- The app name is now **BloodBridge** everywhere people can see it (logo, page titles, emails, footer, FAQ, messages, docs).
+- Technical names use lower case, as npm and email addresses need: package name `bloodbridge-blood-management`, demo admin emails `@bloodbridge.pk`, session cookie `bloodbridge_session`. Everyone is signed out once after this update and simply logs in again.
+- Fixed `lib/server/handlers/client.ts`, which was cut off in the previous commit (the build on Vercel would fail without this).
+- Areas and cities show cleanly everywhere ("Lahore" instead of ", Lahore") in admin tables, donor search and request pages; empty email or phone shows "Not added".
+- Booking notification shows the date and time in 12-hour format ("17 Oct 2026 at 2:30 PM").
+- `metadataBase` uses the Vercel URL (or `NEXT_PUBLIC_SITE_URL`) instead of a placeholder domain.
+- Tests: 59, all passing. A test now checks that Tailwind scans every source folder.
+
 ## Version 3: admin and client modules, tests, server validation
 
 - **Two modules:** `app/(client)` + `modules/client` for the member dashboard, `app/(admin)` + `modules/admin` for the admin console, and shared code in `components/`, `services/` and `lib/`. URLs are unchanged.

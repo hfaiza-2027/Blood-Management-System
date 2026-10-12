@@ -11,7 +11,7 @@ import { scopeOf } from "@/lib/actionScopes";
 test("email rule accepts real addresses and rejects malformed ones", () => {
   const r = rules.email();
   assert.equal(r("ahmed@example.com"), null);
-  assert.equal(r(" sana@qatra.pk "), null);
+  assert.equal(r(" sana@bloodbridge.pk "), null);
   for (const bad of ["", "ahmed", "ahmed@", "@x.com", "a@b.c", "a b@c.com"]) assert.notEqual(r(bad), null, bad);
 });
 
@@ -125,4 +125,15 @@ test("action scopes", () => {
   assert.equal(scopeOf("inventory:list"), "public");
   assert.equal(scopeOf("users:remove"), "admin");
   assert.equal(scopeOf("bloodRequests:create"), "client");
+});
+
+test("12-hour times and place names", async () => {
+  const { formatTime12, joinPlace, formatDateTime } = await import("@/lib/utils");
+  assert.equal(formatTime12("09:00"), "9:00 AM");
+  assert.equal(formatTime12("12:00"), "12:00 PM");
+  assert.equal(formatTime12("16:30"), "4:30 PM");
+  assert.equal(formatTime12("00:15"), "12:15 AM");
+  assert.equal(joinPlace("Lahore", "", "Lahore"), "Lahore");
+  assert.equal(joinPlace("Al Shifa", "12 Mall Road", "Gulberg", "Lahore"), "Al Shifa, 12 Mall Road, Gulberg, Lahore");
+  assert.match(formatDateTime("2026-10-17T14:30:00+05:00"), /2:30\s?pm/i);
 });

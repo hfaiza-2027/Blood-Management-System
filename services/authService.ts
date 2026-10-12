@@ -55,7 +55,7 @@ export const authService = {
 
   async login({ email, password }: LoginInput): Promise<AuthSession> {
     if (!LIVE()) {
-      const admin = email.trim().toLowerCase().endsWith("@qatra.pk");
+      const admin = email.trim().toLowerCase().endsWith("@bloodbridge.pk");
       return mock({ user: { ...currentUser, role: admin ? "admin" : currentUser.role }, token: "mock-token", expiresAt: new Date(Date.now() + 86_400_000).toISOString() }, 500);
     }
     try {
@@ -148,7 +148,7 @@ export const authService = {
    */
   async getCurrentUser(): Promise<User> {
     if (typeof window === "undefined") {
-      const server = globalThis.__qatraServer;
+      const server = globalThis.__bloodbridgeServer;
       if (server?.configured) {
         const user = (await server.currentUser()) as User | null;
         if (!user) throw new ApiError("Authentication required.", 401);

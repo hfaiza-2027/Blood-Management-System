@@ -34,7 +34,7 @@ export type ServerExecutor = (resource: string, action: string, payload?: Record
 
 declare global {
   // eslint-disable-next-line no-var
-  var __qatraServer: { configured: boolean; exec: ServerExecutor; currentUser: () => Promise<unknown> } | undefined;
+  var __bloodbridgeServer: { configured: boolean; exec: ServerExecutor; currentUser: () => Promise<unknown> } | undefined;
 }
 
 const FRIENDLY: Record<string, string> = {
@@ -62,7 +62,7 @@ export async function dataCall<T>(resource: string, action: string, payload?: un
     }
     return body as T;
   }
-  const server = globalThis.__qatraServer;
+  const server = globalThis.__bloodbridgeServer;
   if (!server?.configured) throw new ApiError(FRIENDLY.FIREBASE_SERVER_NOT_CONFIGURED, 503);
   return (await server.exec(resource, action, (payload ?? {}) as Record<string, unknown>)) as T;
 }
@@ -72,7 +72,7 @@ export async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
   try {
     return await p;
   } catch (e) {
-    if (process.env.NODE_ENV !== "production") console.error("[qatra] data load failed:", e);
+    if (process.env.NODE_ENV !== "production") console.error("[BloodBridge] data load failed:", e);
     return fallback;
   }
 }

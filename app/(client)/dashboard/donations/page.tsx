@@ -25,7 +25,7 @@ export default async function DonationsPage() {
     <>
       <PageHeader
         title="Donation history"
-        description="Every donation you've made through Qatra, with certificates for completed ones."
+        description="Every donation you've made through BloodBridge, with certificates for completed ones."
         breadcrumb={[{ label: "Dashboard", href: "/dashboard" }, { label: "Donation history" }]}
         actions={<ButtonLink href="/dashboard/donate">Book a donation</ButtonLink>}
       />

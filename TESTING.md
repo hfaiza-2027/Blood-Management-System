@@ -1,4 +1,4 @@
-# Testing Qatra step by step
+# Testing BloodBridge step by step
 
 Work through the parts in order. Each step says what to do and what you should see. Tick them off as you go. If a step fails, note the step number and send the terminal error or a browser console screenshot (F12 → Console).
 
@@ -147,7 +147,7 @@ Browser 1 (admin):
 | J12 | **Reports**: charts show the current month's activity → **Export CSV** | A CSV file downloads |
 | J13 | **Activity log** | Every action above is listed with a name and time; the filters work |
 | J14 | **Settings**: turn on **Maintenance mode** → confirm | A yellow banner; reload keeps it on |
-| J15 | Member 1 tries to create a request | Error: "Qatra is under maintenance…". Admin turns it off again |
+| J15 | Member 1 tries to create a request | Error: "BloodBridge is under maintenance…". Admin turns it off again |
 | J16 | **Users**: suspend member 1 | Member 1's next action fails and they can't log in ("suspended"). Reactivate afterwards |
 | J17 | Try to suspend or delete your own admin account | Error: "You can't change your own account status." / "…delete your own account." |
 
@@ -185,7 +185,7 @@ In Chrome press **F12**, then **Ctrl+Shift+M**, and pick iPhone SE (375px), then
 
 ## Part M. Demo mode (optional)
 
-Temporarily rename `.env.local` to `.env.local.bak` and restart `npm run dev`. The app runs on sample data: any email opens the member dashboard, and emails ending in `@qatra.pk` open the admin console. Rename the file back afterwards and restart.
+Temporarily rename `.env.local` to `.env.local.bak` and restart `npm run dev`. The app runs on sample data: any email opens the member dashboard, and emails ending in `@bloodbridge.pk` open the admin console. Rename the file back afterwards and restart.
 
 ---
 

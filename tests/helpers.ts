@@ -12,7 +12,7 @@ export const db = fs.__db as { reset(): void; dump(c: string): Record<string, an
 export const authLog = auth.__log as { updated: any[]; deleted: string[]; revoked: string[] };
 
 export const USERS = {
-  admin: { fullName: "Sana Mirza", email: "sana@qatra.pk", role: "admin", bloodGroup: "A+", location: { city: "Lahore", area: "Gulberg" } },
+  admin: { fullName: "Sana Mirza", email: "sana@bloodbridge.pk", role: "admin", bloodGroup: "A+", location: { city: "Lahore", area: "Gulberg" } },
   ahmed: { fullName: "Ahmed Hassan", email: "ahmed@example.com", phone: "03001234567", role: "user", bloodGroup: "O+", location: { city: "Lahore", area: "Johar Town" } },
   ali: { fullName: "Ali Raza", email: "ali@example.com", phone: "03111234567", role: "user", bloodGroup: "O-", location: { city: "Lahore", area: "Model Town" } },
   hira: { fullName: "Hira Batool", email: "hira@example.com", phone: "03211234567", role: "user", bloodGroup: "B+", location: { city: "Karachi", area: "Clifton" } },

@@ -3,7 +3,7 @@ import { getAuth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
 
-export const SESSION_COOKIE = "qatra_session";
+export const SESSION_COOKIE = "bloodbridge_session";
 
 function privateKey() {
   const raw = process.env.FIREBASE_PRIVATE_KEY ?? "";

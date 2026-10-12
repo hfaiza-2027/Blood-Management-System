@@ -1,4 +1,4 @@
-# Qatra: features, validations and limitations
+# BloodBridge: features, validations and limitations
 
 ## 1. Modules
 
@@ -92,7 +92,7 @@ Every rule marked **server** runs in `lib/server/validate.ts`, whoever calls the
 
 ## 4. Limitations
 
-Things to know before relying on Qatra for real patients:
+Things to know before relying on BloodBridge for real patients:
 
 1. **SMS, email and WhatsApp alerts aren't sent.** Notifications appear inside the app only. The switches in Settings are saved but no messages leave the app. Connecting a provider (for example Twilio or the WhatsApp Business API) is a separate task.
 2. **Two-factor authentication is demo-only.** It's hidden when Firebase is configured, because SMS sign-in requires upgrading Firebase to Identity Platform.

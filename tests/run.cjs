@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Zero-dependency test runner for Qatra.
+ * Zero-dependency test runner for BloodBridge.
  *
  *   npm test            run every tests/*.test.ts
  *   npm test -- data    run files whose name contains "data"
@@ -32,8 +32,8 @@ const ts = loadTypeScript();
 // Test environment: pretend Firebase is configured so the real data layer runs against the fakes.
 Object.assign(process.env, {
   NODE_ENV: "test",
-  FIREBASE_PROJECT_ID: "qatra-test",
-  FIREBASE_CLIENT_EMAIL: "test@qatra-test.iam.gserviceaccount.com",
+  FIREBASE_PROJECT_ID: "bloodbridge-test",
+  FIREBASE_CLIENT_EMAIL: "test@bloodbridge-test.iam.gserviceaccount.com",
   FIREBASE_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\\nFAKE\\n-----END PRIVATE KEY-----\\n",
 });
 

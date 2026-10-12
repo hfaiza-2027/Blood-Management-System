@@ -21,7 +21,7 @@ export const currentUser: User = {
 export const currentAdmin: Admin = {
   id: "u-0001",
   fullName: "Sana Mirza",
-  email: "sana.mirza@qatra.pk",
+  email: "sana.mirza@bloodbridge.pk",
   phone: "0333 9087712",
   bloodGroup: "A+",
   gender: "female",

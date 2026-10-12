@@ -1,6 +1,6 @@
-# Qatra — Blood Management System
+# BloodBridge — Blood Management System
 
-Qatra (Urdu for "drop") is a frontend for a blood donation and request network: a public website, a member dashboard for donors and patients' families, and an admin console for coordinators. It is built with Next.js 15 (App Router), React 19, TypeScript and Tailwind CSS 3, with lucide-react for icons and no other runtime dependencies. Charts are hand-built SVG/CSS.
+BloodBridge is a web application for a blood donation and request network: a public website, a member dashboard for donors and patients' families, and an admin console for coordinators. It is built with Next.js 15 (App Router), React 19, TypeScript and Tailwind CSS 3, with lucide-react for icons and no other runtime dependencies. Charts are hand-built SVG/CSS.
 
 All data is fictional and served from a mock service layer, so the app runs with no backend.
 
@@ -23,7 +23,7 @@ The auth screens validate input but accept any credentials:
 | Sign in with | Lands on |
 | --- | --- |
 | any email, e.g. `ahmed@example.com` | `/dashboard` as Ahmed Hassan (O+, Johar Town, Lahore) |
-| any `@qatra.pk` email, e.g. `sana@qatra.pk` | `/admin` as Sana Mirza |
+| any `@bloodbridge.pk` email, e.g. `sana@bloodbridge.pk` | `/admin` as Sana Mirza |
 
 On the OTP screen, `000000` demonstrates the "code expired" error; any other 6 digits succeeds. The in-app clock is fixed at 27 Sep 2026, 10:30 PKT (`MOCK_NOW` in `lib/utils.ts`) so countdowns and "time ago" labels stay consistent.
 
@@ -105,7 +105,7 @@ The project now supports Firebase Authentication + Firestore through the include
 
 In Firebase Console:
 
-1. Create a project named `qatra-blood-management` (or any name you prefer).
+1. Create a project named `bloodbridge-blood-management` (or any name you prefer).
 2. Add a Web App under Project settings > Your apps.
 3. Copy the Web App configuration into `.env.local` using `.env.example`.
 4. Authentication > Sign-in method: enable **Email/Password**.
@@ -138,7 +138,7 @@ Document ID: **the Firebase Authentication UID**
 
 ```json
 {
-  "fullName": "Qatra Admin",
+  "fullName": "BloodBridge Admin",
   "email": "admin@example.com",
   "phone": "03001234567",
   "bloodGroup": "A+",
@@ -158,7 +158,7 @@ Document ID: **the Firebase Authentication UID**
 
 The admin console is protected by the server session and the Firestore `role == admin` check. Do not use an email-domain check for admin access.
 
-### 4. Collections used by Qatra
+### 4. Collections used by BloodBridge
 
 - `users`
 - `donors`
