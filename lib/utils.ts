@@ -1,6 +1,6 @@
-/** Join class names, skipping falsy values. */
-export function cn(...classes: (string | false | null | undefined)[]): string {
-  return classes.filter(Boolean).join(" ");
+/** Join class names, skipping anything that isn't a non-empty string (false, null, 0, ""…). */
+export function cn(...classes: unknown[]): string {
+  return classes.filter((c): c is string => typeof c === "string" && c.length > 0).join(" ");
 }
 
 const DAY = 86_400_000;

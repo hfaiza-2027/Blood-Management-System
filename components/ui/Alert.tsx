@@ -19,7 +19,7 @@ export function Alert({ tone = "info", title, children, action, className }: { t
       <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
       <div className="min-w-0 flex-1">
         {title && <p className="font-semibold">{title}</p>}
-        {children && <div className={cn(title && "mt-1", "text-[13px] leading-relaxed opacity-90")}>{children}</div>}
+        {children && <div className={cn(title ? "mt-1" : undefined, "text-[13px] leading-relaxed opacity-90")}>{children}</div>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>
