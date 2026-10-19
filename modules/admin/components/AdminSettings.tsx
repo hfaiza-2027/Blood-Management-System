@@ -166,7 +166,7 @@ export function AdminSettings({ initial, status }: { initial?: StoredSettings | 
       </Card>
 
       <Card className="xl:col-span-2">
-        <CardHeader title="Starter data" description="Partner facilities, blood stock and cities used across the app. Only empty collections are filled; nothing is overwritten." />
+        <CardHeader title="Starter data" description="Sample partner facilities, stock targets for all eight blood groups (starting at zero units) and the city list. Only empty collections are filled; nothing is overwritten." />
         <CardBody className="space-y-4">
           {counts ? (
             <dl className="grid w-full grid-cols-2 gap-x-4 gap-y-3 text-sm min-[420px]:grid-cols-3 lg:grid-cols-6">
