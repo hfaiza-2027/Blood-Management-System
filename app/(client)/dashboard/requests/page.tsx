@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Request history" };
 
 export default async function RequestHistoryPage() {
   const user = await requireUser();
-  const requests = await bloodRequestService.listMine(user.id);
+  const requests = await bloodRequestService.listMine();
   return (
     <>
       <PageHeader

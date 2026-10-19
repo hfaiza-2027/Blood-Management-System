@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: { default: "Dashboard", template: "%s
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   // redirect() works by throwing, so it must stay outside any try/catch.
-  const user = await getSessionUserOrNull("user");
+  const user = await getSessionUserOrNull();
   if (!user) redirect("/auth/login?next=/dashboard");
   if (user.status === "suspended" || user.status === "inactive") redirect("/auth/login?suspended=1");
   const unread = await safe(notificationService.unreadCount(), 0);
