@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ButtonLink } from "@/components/ui/Button";
-import { NotificationCenter } from "@/modules/client/components/NotificationCenter";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { notificationService } from "@/services/notificationService";
 
 export const metadata: Metadata = { title: "Notifications" };
