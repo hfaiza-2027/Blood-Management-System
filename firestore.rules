@@ -1,6 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // BloodBridge reads and writes through its own server (Firebase Admin SDK),
+    // which is not bound by these rules. The browser only reads the signed-in
+    // member's own profile, so everything else is closed to direct client access.
     function signedIn() { return request.auth != null; }
     function self(uid) { return signedIn() && request.auth.uid == uid; }
     function admin() { return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'; }
@@ -13,29 +16,24 @@ service cloud.firestore {
         && request.resource.data.status == 'active'
         && request.resource.data.verified == false;
       allow update: if admin()
-        || (self(uid) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'verified']));
+        || (self(uid) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'verified', 'email']));
       allow delete: if admin();
     }
 
     match /donors/{id} {
       allow read: if signedIn() && (admin() || resource.data.userId == request.auth.uid);
-      allow create: if signedIn() && (admin() || request.resource.data.userId == request.auth.uid);
-      allow update: if signedIn() && (admin() || resource.data.userId == request.auth.uid);
-      allow delete: if admin();
+      allow write: if admin();
     }
 
+    // Requests carry patient details and phone numbers, so only the requester and admins may read them directly.
     match /bloodRequests/{id} {
-      allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.requesterId == request.auth.uid;
-      allow update: if signedIn() && (admin() || resource.data.requesterId == request.auth.uid);
-      allow delete: if admin();
+      allow read: if signedIn() && (admin() || resource.data.requesterId == request.auth.uid);
+      allow write: if admin();
     }
 
     match /donations/{id} {
       allow read: if signedIn() && (admin() || resource.data.donorId == request.auth.uid);
-      allow create: if signedIn() && request.resource.data.donorId == request.auth.uid;
-      allow update: if signedIn() && (admin() || resource.data.donorId == request.auth.uid);
-      allow delete: if admin();
+      allow write: if admin();
     }
 
     match /hospitals/{id} {
@@ -55,14 +53,16 @@ service cloud.firestore {
 
     match /notifications/{id} {
       allow read: if signedIn() && (admin() || resource.data.userId == request.auth.uid);
-      allow update: if signedIn() && (admin() || resource.data.userId == request.auth.uid);
-      allow create: if admin();
-      allow delete: if admin();
+      allow update: if signedIn() && (admin() || (resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])));
+      allow create, delete: if admin();
     }
 
     match /activity/{id} { allow read, write: if admin(); }
     match /broadcasts/{id} { allow read, write: if admin(); }
     match /settings/{id} { allow read, write: if admin(); }
-    match /donorContacts/{id} { allow read, write: if signedIn() && (admin() || resource.data.requesterId == request.auth.uid); }
+    match /inventoryMovements/{id} { allow read, write: if admin(); }
+    match /contactMessages/{id} { allow read, write: if admin(); }
+    match /donorContacts/{id} { allow read: if signedIn() && (admin() || resource.data.requesterId == request.auth.uid); allow write: if admin(); }
   }
 }
