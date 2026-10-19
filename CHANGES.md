@@ -1,5 +1,51 @@
 # Changes
 
+## Version 5: production-only, admin routing, reports v2, performance
+
+### Demo mode removed
+- All mock data, the mock service layer, the fixed demo clock, the OTP screen and the demo two-factor flow are gone. Every service talks to Firebase through `dataCall`.
+- Missing Firebase settings now show a **setup screen** listing the variables to add, instead of silently falling back to sample data.
+- Hard-coded figures were replaced with live ones: auth page and about page stats, dashboard profile completion and checklist, upcoming appointment time, broadcast history.
+- `data/` now holds only area coordinates and optional starter records. Starter stock begins at **zero units**.
+
+### Admin routing (the "stuck in the member view" bug)
+- Login now decides the destination by role (`lib/routing.ts`): admins always land in `/admin`; a `next` link only wins when it points inside the console. Previously public buttons such as "Request blood" sent admins to `/dashboard/...` after login.
+- The bell in the admin console opens the new **Inbox** instead of the member notifications page.
+- Admins get **My account** inside the console (name, phone, password, sign out everywhere), so they never need the member settings page.
+- When an admin opens the member view, a banner offers **Back to admin console**.
+- The public navbar knows who is signed in and shows **Admin console** / **My dashboard**; `/auth/login` and `/auth/register` redirect signed-in people home.
+
+### Reports v2
+- Any period: last 7 / 30 / 90 days, 12 months, this year or a custom range (up to two years), plus city, blood group, urgency and facility filters, all in the URL.
+- Comparison with the previous period on every summary figure; rates change in points.
+- New measures: emergencies met on time, median time to first donor, median time to fulfil, unit fulfilment, new donors, new members, stock in/out.
+- Fulfilment rate fixed: cancelled requests are excluded and periods with no requests show a gap instead of 0%.
+- Breakdowns: status, urgency, demand vs supply per group, cities, top facilities, appointment outcomes, donor verification, stock.
+- Full multi-section CSV export and a print layout for PDF.
+- The Blood groups page uses the same engine, so both pages always agree.
+
+### Performance and data integrity
+- Totals use `count()` queries; dashboards, reports and the activity log read only the documents in range.
+- Public data is cached per instance for up to a minute and refreshed by the writes that change it.
+- Session lookups are shared between layout and page in one request.
+- Stock adjustments and donor responses use Firestore transactions. Every stock change is stored in `inventoryMovements`.
+- Requests now record `firstResponseAt`, `fulfilledAt` and `closedAt`.
+- New composite indexes in `firestore.indexes.json` (deploy them).
+
+### Security and privacy
+- Firestore rules close every collection to direct browser access except a member's own profile and notifications.
+- A requester's phone number is masked on the server until a member offers to donate; the public emergency feed drops names and numbers.
+- Admin status, verification and donation status values are validated on the server.
+
+### New features
+- Working **contact form** (stored in `contactMessages`, with a spam trap) and an admin **Inbox** to handle messages.
+- Facilities can be removed (blocked while they have open requests).
+- Recent stock movements on the Inventory page.
+- Page progress bar on every navigation; dashboards keep working if one section fails; greetings use Pakistan time.
+
+### Tests
+- 77 tests, all passing (18 new in `tests/improvements.test.ts`). The in-memory Firestore now supports range and `in` queries, ordering and transactions.
+
 ## Version 4: renamed to BloodBridge
 
 - The app name is now **BloodBridge** everywhere people can see it (logo, page titles, emails, footer, FAQ, messages, docs).

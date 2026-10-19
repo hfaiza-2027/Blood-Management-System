@@ -17,7 +17,7 @@ Copy `.env.example` to `.env.local` and fill both sections:
 - `NEXT_PUBLIC_*` = Web app configuration.
 - `FIREBASE_*` = Admin SDK service-account configuration.
 
-The private key must stay server-only.
+The private key must stay server-only. Until every variable is present, BloodBridge shows a setup screen listing what's missing (there is no demo mode). On Vercel, add the same variables under Project → Settings → Environment Variables and redeploy.
 
 ## C. Firestore rules
 
@@ -76,6 +76,9 @@ Create these collections as the application begins using them:
 - `notifications`
 - `activity`
 - `donorContacts`
+- `inventoryMovements` (every stock adjustment; feeds Reports)
+- `contactMessages` (public contact form; shown in Admin → Inbox)
+- `settings`, `broadcasts`
 
 You do not have to manually create every collection before running the app. Firestore creates a collection when the first document is written.
 
@@ -86,10 +89,12 @@ A fresh Firestore has no hospitals, stock or cities, so Donate, Request blood an
 1. Log in as the admin.
 2. Open **Admin → Settings**.
 3. Click **Load starter data**. It fills only empty collections (`hospitals`, `inventory`, `locations`) and never overwrites anything.
+4. Stock targets are loaded with **zero units**. Record real stock in Admin → Blood inventory; each change is logged for Reports.
+5. The sample facilities are fictional. Edit them into your real partners or remove them in Admin → Hospitals & banks.
 
-## E3. Deploy the updated rules (new)
+## E3. Deploy the rules and indexes (required)
 
-`firestore.rules` was tightened: members can no longer give themselves the `admin` role, change their own `status`/`verified`, and new `settings` and `broadcasts` collections are admin-only. Deploy again:
+`firestore.rules` closes every collection to direct browser access except a member's own profile and notifications; all other data goes through BloodBridge's server. `firestore.indexes.json` adds the composite indexes the dashboards, reports and badges need (for example emergency requests by status). Deploy both after every update:
 
 ```bash
 firebase deploy --only firestore:rules,firestore:indexes
@@ -127,7 +132,6 @@ Before production, add:
 - App Check
 - rate limiting on API routes
 - audit logging for sensitive admin actions
-- proper transactional inventory updates
 - real notification delivery (email/SMS/WhatsApp)
 - verified hospital/blood-bank onboarding
 - professional medical/legal review of donor eligibility wording
