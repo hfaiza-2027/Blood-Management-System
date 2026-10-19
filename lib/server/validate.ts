@@ -72,3 +72,25 @@ export function checkInventoryDelta(delta: unknown) {
   const d = Number(delta);
   if (!Number.isInteger(d) || d === 0 || Math.abs(d) > 1000) fail("Enter a whole number of units to add or remove (up to 1,000).");
 }
+
+export const CONTACT_TOPICS = ["general", "partner", "drive", "report"];
+
+export function checkContactMessage(i: Payload) {
+  if (str(i.name).length < 2 || str(i.name).length > 80) fail("Enter your name.");
+  if (rules.email()(str(i.email))) fail("Enter a valid email address.");
+  if (str(i.phone) && rules.phone()(str(i.phone))) fail("Enter a Pakistani mobile number, like 0300 1234567.");
+  if (i.topic !== undefined && !CONTACT_TOPICS.includes(String(i.topic))) fail("Choose what your message is about.");
+  if (str(i.message).length < 10) fail("Write a message of at least 10 characters.");
+  if (str(i.message).length > 2000) fail("Keep your message under 2,000 characters.");
+}
+
+/** Report filters arrive from the URL, so every field is checked and clamped here. */
+export function checkReportFilters(f: Payload) {
+  const from = new Date(String(f.from ?? ""));
+  const to = new Date(String(f.to ?? ""));
+  if (Number.isNaN(+from) || Number.isNaN(+to)) fail("Choose a valid date range.");
+  if (+from > +to) fail("The start date must be before the end date.");
+  if (+to - +from > 731 * 86_400_000) fail("Reports can cover up to two years at a time.");
+  if (f.bloodGroup && !isGroup(f.bloodGroup)) fail("Choose a valid blood group.");
+  if (f.urgency && !URGENCIES.includes(String(f.urgency))) fail("Choose a valid urgency.");
+}

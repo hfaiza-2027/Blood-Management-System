@@ -7,7 +7,7 @@ import { mockInventory } from "@/data/mockInventory";
 import { BLOOD_GROUPS, CITIES } from "@/lib/constants";
 import { distanceKm } from "@/lib/geo";
 import { checkBroadcast, checkFacility, checkInventoryDelta } from "../validate";
-import { OPEN, STATUSES, STATUS_LABEL, HttpError, serial, all, one, slug, nowIso, normaliseUser, normaliseDonor, normaliseInventory, log, notify, lastMonths, monthly, recentActivity, type Handler, type Payload } from "../core";
+import { OPEN, STATUSES, STATUS_LABEL, HttpError, serial, all, one, slug, nowIso, invalidate, normaliseUser, normaliseDonor, normaliseInventory, log, notify, lastMonths, monthly, recentActivity, type Handler, type Payload } from "../core";
 
 export const adminHandlers: Record<string, Handler> = {
   "users:list": async ({ payload, me, store }) => {
@@ -231,6 +231,7 @@ export const adminHandlers: Record<string, Handler> = {
     const patch: Payload = {};
     for (const k of ["general", "matching", "flags"]) if (payload[k]) patch[k] = payload[k];
     await store.collection("settings").doc("system").set({ ...patch, updatedAt: nowIso(), updatedBy: me.name }, { merge: true });
+    invalidate("settings:");
     await log("system", me.name, `updated system settings (${Object.keys(patch).join(", ")})`);
     return { ok: true };
   },
