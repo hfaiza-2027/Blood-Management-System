@@ -9,15 +9,11 @@ import { Input } from "@/components/ui/Field";
 import { Alert } from "@/components/ui/Alert";
 import { useToast } from "@/components/ui/Toast";
 import { PasswordInput, StrengthMeter } from "./PasswordInput";
-import { OtpInput } from "./OtpInput";
 import { authService } from "@/services/authService";
-import { firebaseAuth, firebaseConfigured } from "@/lib/firebase/client";
-import { confirmPasswordReset, reload, sendEmailVerification } from "firebase/auth";
+import { firebaseAuth } from "@/lib/firebase/client";
+import { reload } from "firebase/auth";
+import { postLoginPath } from "@/lib/routing";
 
-/** Only allow redirects back into this app. */
-function safeNext(raw: string | null, fallback: string) {
-  return raw && raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/auth") ? raw : fallback;
-}
 import { hasErrors, rules, validate, type Errors } from "@/lib/validations";
 
 function Heading({ title, sub }: { title: string; sub?: ReactNode }) {
@@ -52,10 +48,8 @@ export function LoginForm() {
     setLoading(true);
     try {
       const session = await authService.login(v);
-      const home = session.user.role === "admin" ? "/admin" : "/dashboard";
-      const target = safeNext(next, home);
-      // Members can't open the admin console, so don't send them there.
-      router.replace(target.startsWith("/admin") && session.user.role !== "admin" ? "/dashboard" : target);
+      // Admins always start in the admin console; members return to where they were going.
+      router.replace(postLoginPath(session.user.role, next));
       router.refresh();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "We couldn't log you in. Try again.");
@@ -77,12 +71,6 @@ export function LoginForm() {
         </div>
         <Button type="submit" size="lg" className="w-full" loading={loading} loadingText="Logging in…">Log in</Button>
       </form>
-      {!firebaseConfigured && (
-        <div className="mt-8 rounded-card border border-dashed border-line bg-paper p-4 text-[13px] text-ink-600">
-          <p className="font-semibold text-ink-800">Demo mode</p>
-          <p className="mt-1">Any email and password opens the donor dashboard. Use an address ending in <span className="font-semibold">@bloodbridge.pk</span> for the admin console.</p>
-        </div>
-      )}
     </>
   );
 }
@@ -114,7 +102,6 @@ export function ForgotPasswordForm() {
       <div>
         <MailCheck className="h-10 w-10 text-ok-600" aria-hidden />
         <Heading title="Check your email" sub={<>If an account exists for <span className="font-semibold text-ink-800">{email}</span>, you&apos;ll get a reset link in the next few minutes. It expires in 30 minutes.</>} />
-        {!firebaseConfigured && <ButtonLink href="/auth/reset-password" variant="outline" className="w-full">Open the reset link (demo)</ButtonLink>}
         <Link href="/auth/login" className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-ink-600 hover:text-ink-900"><ArrowLeft className="h-4 w-4" aria-hidden /> Back to log in</Link>
       </div>
     );
@@ -148,8 +135,7 @@ export function ResetPasswordForm() {
     if (hasErrors(errs)) return;
     setLoading(true);
     try {
-      if (firebaseConfigured && firebaseAuth && token) await confirmPasswordReset(firebaseAuth, token, v.password);
-      else await authService.resetPassword(token ?? "token", v.password);
+      await authService.resetPassword(token ?? "", v.password);
       toast.success("Password updated", "Log in with your new password.");
       router.push("/auth/login");
     } catch (err) {
@@ -194,7 +180,7 @@ function ResendButton({ onResend }: { onResend: () => Promise<unknown> }) {
         setWait(30);
       }}
     >
-      {wait > 0 ? `Resend code in ${wait}s` : "Resend code"}
+      {wait > 0 ? `Resend email in ${wait}s` : "Resend email"}
     </Button>
   );
 }
@@ -206,10 +192,6 @@ export function VerifyEmail({ email }: { email: string }) {
   async function check() {
     setChecking(true);
     try {
-      if (!firebaseConfigured) {
-        router.push("/dashboard/profile?setup=donor");
-        return;
-      }
       const u = firebaseAuth?.currentUser;
       if (!u) {
         toast.info("Log in to continue", "Use the email and password you just created.");
@@ -243,46 +225,8 @@ export function VerifyEmail({ email }: { email: string }) {
       </div>
       <div className="mt-6 flex items-center justify-between text-sm text-ink-500">
         <span>Didn&apos;t get it? Check spam.</span>
-        <ResendButton onResend={async () => { try { if (firebaseAuth?.currentUser) await sendEmailVerification(firebaseAuth.currentUser); toast.info("Verification email sent again"); } catch { toast.error("Wait a minute before requesting another email."); } }} />
+        <ResendButton onResend={async () => { try { await authService.resendVerification(); toast.info("Verification email sent again"); } catch (err) { toast.error("Couldn't resend the email", err instanceof Error ? err.message : "Wait a minute, then try again."); } }} />
       </div>
     </div>
-  );
-}
-
-export function VerifyOtpForm({ phone }: { phone: string }) {
-  const router = useRouter();
-  const toast = useToast();
-  const [code, setCode] = useState("");
-  const [error, setError] = useState<string>();
-  const [loading, setLoading] = useState(false);
-
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    const msg = rules.otp()(code.replace(/\s/g, ""));
-    setError(msg ?? undefined);
-    if (msg) return;
-    setLoading(true);
-    try {
-      await authService.verifyOtp(code);
-      toast.success("Phone number verified", "Next, complete your donor profile.");
-      router.push("/dashboard/profile?setup=donor");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "That code didn't work.");
-      setLoading(false);
-    }
-  }
-
-  return (
-    <>
-      <Heading title="Enter the 6-digit code" sub={<>We sent it by SMS to <span className="font-semibold text-ink-800">{phone}</span>. It expires in 10 minutes.</>} />
-      <form onSubmit={submit} noValidate className="space-y-6">
-        <OtpInput value={code} onChange={setCode} error={error} />
-        <Button type="submit" size="lg" className="w-full" loading={loading} loadingText="Verifying…">Verify</Button>
-      </form>
-      <div className="mt-6 flex items-center justify-between text-sm text-ink-500">
-        <span>Try 000000 to see the expired-code error.</span>
-        <ResendButton onResend={() => authService.resendCode()} />
-      </div>
-    </>
   );
 }

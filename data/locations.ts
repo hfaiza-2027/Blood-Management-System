@@ -1,4 +1,4 @@
-import type { ApproxLocation, CityLocation, GeoPoint } from "@/types";
+import type { GeoPoint } from "@/types";
 
 /** Approximate centroids of areas. Donor positions are jittered around these. */
 export const AREA_POINTS: Record<string, Record<string, GeoPoint>> = {
@@ -38,16 +38,3 @@ export const AREA_POINTS: Record<string, Record<string, GeoPoint>> = {
     "Susan Road": { lat: 31.43, lng: 73.1 },
   },
 };
-
-export function loc(city: string, area: string, jitter = 0): ApproxLocation {
-  const p = AREA_POINTS[city]?.[area] ?? { lat: 31.52, lng: 74.35 };
-  return { city, area, point: { lat: p.lat + jitter * 0.01, lng: p.lng - jitter * 0.008 } };
-}
-
-export const mockLocations: CityLocation[] = [
-  { id: "loc-lhr", city: "Lahore", areas: Object.keys(AREA_POINTS.Lahore), activeDonors: 1842, openRequests: 37, facilities: 9 },
-  { id: "loc-skp", city: "Sheikhupura", areas: Object.keys(AREA_POINTS.Sheikhupura), activeDonors: 312, openRequests: 6, facilities: 1 },
-  { id: "loc-khi", city: "Karachi", areas: Object.keys(AREA_POINTS.Karachi), activeDonors: 1206, openRequests: 22, facilities: 1 },
-  { id: "loc-isb", city: "Islamabad", areas: Object.keys(AREA_POINTS.Islamabad), activeDonors: 588, openRequests: 9, facilities: 1 },
-  { id: "loc-fsd", city: "Faisalabad", areas: Object.keys(AREA_POINTS.Faisalabad), activeDonors: 401, openRequests: 5, facilities: 1 },
-];

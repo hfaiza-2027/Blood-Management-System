@@ -13,8 +13,7 @@ import { useToast } from "@/components/ui/Toast";
 import { BLOOD_GROUPS, CITY_NAMES } from "@/lib/constants";
 import { hasErrors, rules, validate, type Errors } from "@/lib/validations";
 import { formatNumber, timeAgo } from "@/lib/utils";
-
-interface Sent { id: string; title: string; body: string; audience: string; sent: number; at: string }
+import type { BroadcastRecord as Sent } from "@/services/notificationService";
 
 const AUDIENCES = [
   { value: "all", label: "Everyone" },
@@ -24,21 +23,15 @@ const AUDIENCES = [
 ];
 const audienceLabel = (v: string) => AUDIENCES.find((a) => a.value === v)?.label ?? v;
 
-const HISTORY: Sent[] = [
-  { id: "b3", title: "O- stock is critical in Lahore", body: "Model Town and Iqbal Town blood banks are below half their weekly need for O-. If you are O- and eligible, please book a slot this week.", audience: "group:O-", sent: 181, at: "2026-09-26T18:00:00+05:00" },
-  { id: "b2", title: "Weekend donation drive at DHA", body: "The mobile unit will be at Phase 5 Commercial on Saturday and Sunday, 10:00 to 16:00. Walk-ins welcome.", audience: "city:Lahore", sent: 1842, at: "2026-09-19T11:30:00+05:00" },
-  { id: "b1", title: "Updated eligibility questions", body: "We simplified the pre-donation questionnaire. It now takes under two minutes.", audience: "all", sent: 12486, at: "2026-09-02T09:00:00+05:00" },
-];
-
 type Values = { title: string; body: string; audience: string };
 
-export function BroadcastPanel({ initialHistory }: { initialHistory?: Sent[] }) {
+export function BroadcastPanel({ initialHistory }: { initialHistory: Sent[] }) {
   const toast = useToast();
   const [values, setValues] = useState<Values>({ title: "", body: "", audience: "donors" });
   const [errors, setErrors] = useState<Errors<Values>>({});
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [history, setHistory] = useState<Sent[]>(initialHistory ?? HISTORY);
+  const [history, setHistory] = useState<Sent[]>(initialHistory);
 
   const set = (k: keyof Values) => (e: { target: { value: string } }) => setValues((s) => ({ ...s, [k]: e.target.value }));
 

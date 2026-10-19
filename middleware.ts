@@ -1,14 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const LIVE = Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
+const SESSION_COOKIE = "bloodbridge_session";
 
 /**
  * Fast gate for private areas: without a session cookie, go straight to login
- * (keeping where the person was headed). Layouts still verify the session.
+ * (keeping where the person was headed). Layouts still verify the session and
+ * the role on the server.
  */
 export function middleware(req: NextRequest) {
-  if (!LIVE) return NextResponse.next();
-  const hasSession = Boolean(req.cookies.get("bloodbridge_session")?.value);
+  const hasSession = Boolean(req.cookies.get(SESSION_COOKIE)?.value);
   if (!hasSession) {
     const url = req.nextUrl.clone();
     url.pathname = "/auth/login";
