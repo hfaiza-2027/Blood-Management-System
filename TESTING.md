@@ -183,9 +183,22 @@ In Chrome press **F12**, then **Ctrl+Shift+M**, and pick iPhone SE (375px), then
 
 ---
 
-## Part M. Demo mode (optional)
+## Part M. Admin routing and reports (version 5)
 
-Temporarily rename `.env.local` to `.env.local.bak` and restart `npm run dev`. The app runs on sample data: any email opens the member dashboard, and emails ending in `@bloodbridge.pk` open the admin console. Rename the file back afterwards and restart.
+| # | Do this | Expect |
+| --- | --- | --- |
+| M1 | Log out. On the home page click **Request blood**, then log in as the admin | You land on `/admin`, not the member request form |
+| M2 | As admin, open the account menu → **Open member view** | The member dashboard opens with a blue banner; **Back to admin console** returns you |
+| M3 | As admin, click the bell in the top bar | `/admin/inbox` opens (not the member notifications page) |
+| M4 | While signed in, open `/` and `/auth/login` | The navbar shows **Admin console** / **My dashboard**; the login page redirects you home |
+| M5 | Send a message from `/contact` (signed out) | It appears in Admin → Inbox as **New**; the sidebar badge counts it; mark it resolved |
+| M6 | Admin → Blood inventory: add 20 units of A+, then remove 5 | Both appear under **Recent stock movements** with the running balance |
+| M7 | Admin → Reports: switch between **Last 7 days**, **Last 12 months** and a **Custom range** | The URL updates, charts switch between daily / weekly / monthly, and each summary card compares with the previous period |
+| M8 | Reports: choose a city, then a facility | Figures narrow; the facility list only shows that city's facilities; **Reset** clears everything |
+| M9 | Reports: **Export CSV** | One file with a titled block per section opens correctly in Excel or Google Sheets |
+| M10 | Reports: **Print / PDF** | The printout has no sidebar or filters, starts with a line describing the period and filters, and tables aren't cut mid-row |
+| M11 | As a second member, open someone else's request | The contact number is masked; after **Respond** it shows in full |
+| M12 | Remove one `NEXT_PUBLIC_FIREBASE_*` value and restart | Every page shows the setup screen listing that variable |
 
 ---
 
@@ -196,6 +209,8 @@ Temporarily rename `.env.local` to `.env.local.bak` and restart `npm run dev`. T
 | "Firebase server configuration is missing" | Check `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` and `FIREBASE_PRIVATE_KEY` in `.env.local` (keep the private key in quotes); restart `npm run dev` |
 | Logged in but sent back to login | The `users/<UID>` document is missing or its `status` isn't `active` |
 | `/admin` opens `/dashboard` | `role` isn't exactly `admin` (lowercase string) in `users/<UID>` |
+| "The query requires an index" in the server log | Deploy the indexes: `firebase deploy --only firestore:indexes` (new indexes take a few minutes to build) |
+| Every page shows "Finish setting up BloodBridge" | One or more Firebase variables are missing; the screen lists which |
 | Donate or Request pages show "No facilities are listed yet" | Do step C3 |
 | "Missing or insufficient permissions" in the console | Deploy the rules again (B2) |
 | `npm test` says TypeScript not found | Run `npm install` first |
