@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarCheck, CircleCheck, Droplet, FileText, HandHeart, HeartPulse, Hourglass, UserRound } from "lucide-react";
+import { Circle, CircleCheck, Droplet, FileText, HandHeart, HeartPulse, History, Hourglass, UserRound } from "lucide-react";
 import { StatisticCard } from "@/components/blood/StatisticCard";
 import { BloodRequestCard } from "@/components/blood/BloodRequestCard";
 import { RespondButton, AvailabilityToggle } from "@/modules/client/components/Actions";
@@ -15,7 +15,7 @@ import { dashboardService } from "@/services/dashboardService";
 import { bloodRequestService } from "@/services/bloodRequestService";
 import { donationService } from "@/services/donationService";
 import { checkEligibility, ELIGIBILITY_DISCLAIMER } from "@/lib/eligibility";
-import { addDays, ageFromDob, daysBetween, formatDate, greeting, now, timeAgo } from "@/lib/utils";
+import { addDays, ageFromDob, daysBetween, formatDate, greeting, now, timeAgo, TIME_ZONE } from "@/lib/utils";
 import { canDonateTo } from "@/lib/constants";
 import type { ActivityItem } from "@/types";
 import { donorService } from "@/services/donorService";
@@ -31,10 +31,11 @@ const activityIcon: Record<ActivityItem["kind"], typeof Droplet> = {
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  // Each section degrades on its own: one slow or failed query never blanks the whole dashboard.
   const [{ stats, activity }, nearbyAll, donations, donor] = await Promise.all([
-    dashboardService.userOverview(),
-    bloodRequestService.nearbyEmergencies(user.location.point, 20),
-    donationService.listMine(),
+    safe(dashboardService.userOverview(), { stats: { totalDonations: 0, livesHelped: 0, activeRequests: 0, pendingRequests: 0 }, activity: [] }),
+    safe(bloodRequestService.nearbyEmergencies(user.location.point, 20), []),
+    safe(donationService.listMine(), []),
     safe(donorService.getById(user.id), undefined),
   ]);
   // Your own requests are in Request history; don't offer to respond to them here.
@@ -42,7 +43,16 @@ export default async function DashboardPage() {
 
   const last = donations.find((d) => d.status === "completed");
   const upcoming = donations.find((d) => d.status === "scheduled");
-  const elig = checkEligibility({ age: ageFromDob(user.dateOfBirth), weightKg: donor?.weightKg || 74, lastDonationDate: last?.date ?? donor?.lastDonationDate ?? null });
+  // Weight is only known once someone registers as a donor; until then eligibility is not estimated.
+  const elig = donor ? checkEligibility({ age: ageFromDob(user.dateOfBirth), weightKg: donor.weightKg ?? 0, lastDonationDate: last?.date ?? donor.lastDonationDate ?? null }) : null;
+  const profileChecks = [
+    { done: Boolean(user.phone), label: "Mobile number added", href: "/dashboard/settings" },
+    { done: user.verified, label: "Email address confirmed", href: "/dashboard/settings" },
+    { done: Boolean(user.emergencyContact?.phone), label: "Emergency contact added", href: "/dashboard/profile" },
+    { done: Boolean(donor), label: "Registered as a donor", href: "/dashboard/register-donor" },
+    { done: donor?.verification === "verified", label: "Donor details verified by a coordinator", href: "/dashboard/profile" },
+  ];
+  const completion = Math.round((profileChecks.filter((c) => c.done).length / profileChecks.length) * 100);
   const compatible = canDonateTo(user.bloodGroup);
   const matching = nearby.filter((r) => compatible.includes(r.bloodGroup));
   const firstName = user.fullName.split(" ")[0];
@@ -105,12 +115,13 @@ export default async function DashboardPage() {
 
           <Card>
             <CardHeader title="Recent activity" />
+            {activity.length === 0 && <EmptyState icon={<History className="h-5 w-5" />} title="No activity yet" description="Requests, donations and profile changes will show up here." className="border-0 shadow-none" />}
             <ul className="divide-y divide-line">
               {activity
                 .slice()
                 .sort((a, b) => +new Date(b.at) - +new Date(a.at))
                 .map((a) => {
-                  const Icon = activityIcon[a.kind];
+                  const Icon = activityIcon[a.kind] ?? FileText;
                   return (
                     <li key={a.id} className="flex items-start gap-3 px-5 py-3.5">
                       <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink-50 text-ink-500"><Icon className="h-4 w-4" aria-hidden /></span>
@@ -144,7 +155,7 @@ export default async function DashboardPage() {
                 <div>
                   <dt className="text-ink-500">Next eligible</dt>
                   <dd className="mt-0.5 font-semibold text-ink-900">
-                    {elig.status === "likely_eligible" ? <span className="text-ok-700">Available now</span> : formatDate(addDays(now(), elig.daysUntilEligible))}
+                    {!elig ? <span className="text-ink-500">Register to check</span> : elig.status === "likely_eligible" ? <span className="text-ok-700">Available now</span> : elig.status === "wait" ? formatDate(addDays(now(), elig.daysUntilEligible)) : <span className="text-warn-700">Ask a doctor</span>}
                   </dd>
                 </div>
                 <div className="col-span-2">
@@ -163,7 +174,7 @@ export default async function DashboardPage() {
 
           {upcoming && (
             <Alert tone="info" title="Upcoming appointment">
-              {upcoming.centerName}, {formatDate(upcoming.date, { weekday: "long", day: "numeric", month: "long" })} at 11:00.{" "}
+              {upcoming.centerName}, {formatDate(upcoming.date, { weekday: "long", day: "numeric", month: "long" })} at {new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(upcoming.date))}.{" "}
               <Link href="/dashboard/donations" className="font-semibold underline">View details</Link>
             </Alert>
           )}
@@ -173,13 +184,19 @@ export default async function DashboardPage() {
             <CardBody>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-ink-600">Profile completion</span>
-                <span className="font-semibold tabular-nums text-ink-900">85%</span>
+                <span className="font-semibold tabular-nums text-ink-900">{completion}%</span>
               </div>
-              <div className="mt-2 h-2 rounded-full bg-ink-100"><div className="h-full w-[85%] rounded-full bg-ink-800" /></div>
+              <div className="mt-2 h-2 rounded-full bg-ink-100" role="progressbar" aria-label="Profile completion" aria-valuenow={completion} aria-valuemin={0} aria-valuemax={100}>
+                <div className="h-full rounded-full bg-ink-800 transition-[width]" style={{ width: `${completion}%` }} />
+              </div>
               <ul className="mt-4 space-y-2 text-[13px] text-ink-600">
-                <li className="flex items-center gap-2"><CircleCheck className="h-4 w-4 text-ok-600" aria-hidden /> Phone and email verified</li>
-                <li className="flex items-center gap-2"><CircleCheck className="h-4 w-4 text-ok-600" aria-hidden /> Donor details reviewed</li>
-                <li className="flex items-center gap-2"><CalendarCheck className="h-4 w-4 text-ink-300" aria-hidden /> <Link href="/dashboard/profile" className="underline hover:text-ink-900">Add a profile photo</Link></li>
+                {profileChecks.map((c) => (
+                  <li key={c.label} className="flex items-center gap-2">
+                    {c.done ? <CircleCheck className="h-4 w-4 shrink-0 text-ok-600" aria-hidden /> : <Circle className="h-4 w-4 shrink-0 text-ink-300" aria-hidden />}
+                    {c.done ? <span>{c.label}</span> : <Link href={c.href} className="underline decoration-ink-300 underline-offset-2 hover:text-ink-900">{c.label}</Link>}
+                    <span className="sr-only">{c.done ? "(done)" : "(to do)"}</span>
+                  </li>
+                ))}
               </ul>
             </CardBody>
           </Card>

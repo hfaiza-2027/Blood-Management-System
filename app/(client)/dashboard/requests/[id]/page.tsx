@@ -12,7 +12,7 @@ import { RequestTimeline } from "@/components/blood/RequestTimeline";
 import { CancelRequestButton } from "@/modules/client/components/CancelRequestButton";
 import { bloodRequestService, isOpen } from "@/services/bloodRequestService";
 import { canReceiveFrom } from "@/lib/constants";
-import { formatDateTime, maskPhone, timeRemaining, formatPlace } from "@/lib/utils";
+import { formatDateTime, timeRemaining, formatPlace } from "@/lib/utils";
 import { requireUser } from "@/lib/session";
 import { safe } from "@/services/client";
 
@@ -26,9 +26,9 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
 
 export default async function RequestDetailPage({ params }: P) {
   const { id } = await params;
+  const user = await requireUser();
   const r = await bloodRequestService.getById(id);
   if (!r) notFound();
-  const user = await requireUser();
   const mine = r.requesterId === user.id;
 
   const open = isOpen(r);
@@ -38,7 +38,8 @@ export default async function RequestDetailPage({ params }: P) {
     { icon: Building2, label: "Hospital", value: r.hospitalName },
     { icon: MapPin, label: "Area", value: formatPlace(r.location) },
     { icon: CalendarClock, label: "Needed by", value: `${formatDateTime(r.requiredBy)}${open && left.hours > 0 ? ` (${left.label})` : ""}` },
-    { icon: Phone, label: "Contact number", value: mine ? r.contactNumber : maskPhone(r.contactNumber) },
+    // The server masks the number unless you are the requester, an admin, or a donor who offered to help.
+    { icon: Phone, label: "Contact number", value: r.contactNumber || "Not shared" },
     { icon: UsersRound, label: "Donors contacted", value: String(r.donorsContacted) },
   ];
 
