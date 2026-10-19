@@ -40,7 +40,6 @@ export const rules = {
     limit.setFullYear(limit.getFullYear() - years);
     return d <= limit ? null : `You must be at least ${years} years old.`;
   },
-  otp: (): Rule => (v) => (/^\d{6}$/.test(v) ? null : "Enter the 6-digit code."),
 };
 
 /**

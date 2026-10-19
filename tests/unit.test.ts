@@ -29,10 +29,7 @@ test("password rule needs 8+ chars with upper, lower and a digit", () => {
   assert.match(r("NoDigitsHere") ?? "", /number/);
 });
 
-test("otp, blood group and integer range rules", () => {
-  assert.equal(rules.otp()("123456"), null);
-  assert.notEqual(rules.otp()("12345"), null);
-  assert.notEqual(rules.otp()("12a456"), null);
+test("blood group and integer range rules", () => {
   assert.equal(rules.bloodGroup()("AB-"), null);
   assert.notEqual(rules.bloodGroup()("C+"), null);
   const units = rules.intRange("Units", 1, 10);

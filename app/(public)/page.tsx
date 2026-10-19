@@ -7,7 +7,7 @@ import { BloodGroupExplorer } from "@/components/public/BloodGroupExplorer";
 import { NearbyMap } from "@/components/public/NearbyMap";
 import { inventoryService } from "@/services/inventoryService";
 import { bloodRequestService } from "@/services/bloodRequestService";
-import { dashboardService } from "@/services/dashboardService";
+import { dashboardService, EMPTY_PUBLIC_OVERVIEW } from "@/services/dashboardService";
 import { safe } from "@/services/client";
 import { BLOOD_GROUPS, CITY_NAMES } from "@/lib/constants";
 import { DEFAULT_POINT } from "@/lib/geo";
@@ -35,7 +35,7 @@ export default async function HomePage() {
   const [inventory, emergencies, publicStats] = await Promise.all([
     safe(inventoryService.list(), []),
     safe(bloodRequestService.nearbyEmergencies(DEFAULT_POINT, 30), []),
-    safe(dashboardService.publicOverview(), { activeDonors: 0, donationsArranged: 0, bloodRequests: 0, users: 0 }),
+    safe(dashboardService.publicOverview(), EMPTY_PUBLIC_OVERVIEW),
   ]);
   const topEmergencies = emergencies.filter((r) => r.urgency === "emergency").slice(0, 3);
 

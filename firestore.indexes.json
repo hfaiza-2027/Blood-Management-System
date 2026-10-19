@@ -1,8 +1,19 @@
 {
   "indexes": [
+    { "collectionGroup": "notifications", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "userId", "order": "ASCENDING" }, { "fieldPath": "read", "order": "ASCENDING" }] },
     { "collectionGroup": "notifications", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "userId", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" }] },
     { "collectionGroup": "bloodRequests", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "requesterId", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" }] },
-    { "collectionGroup": "donations", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "donorId", "order": "ASCENDING" }, { "fieldPath": "date", "order": "DESCENDING" }] }
+    { "collectionGroup": "bloodRequests", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "urgency", "order": "ASCENDING" }, { "fieldPath": "status", "order": "ASCENDING" }] },
+    { "collectionGroup": "bloodRequests", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "location.city", "order": "ASCENDING" }, { "fieldPath": "status", "order": "ASCENDING" }] },
+    { "collectionGroup": "bloodRequests", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "hospitalId", "order": "ASCENDING" }, { "fieldPath": "status", "order": "ASCENDING" }] },
+    { "collectionGroup": "donations", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "donorId", "order": "ASCENDING" }, { "fieldPath": "date", "order": "DESCENDING" }] },
+    { "collectionGroup": "donations", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "donorId", "order": "ASCENDING" }, { "fieldPath": "status", "order": "ASCENDING" }] },
+    { "collectionGroup": "donors", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "location.city", "order": "ASCENDING" }] },
+    { "collectionGroup": "donors", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "bloodGroup", "order": "ASCENDING" }] },
+    { "collectionGroup": "donors", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "location.city", "order": "ASCENDING" }, { "fieldPath": "status", "order": "ASCENDING" }, { "fieldPath": "bloodGroup", "order": "ASCENDING" }] },
+    { "collectionGroup": "donors", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "location.city", "order": "ASCENDING" }, { "fieldPath": "verification", "order": "ASCENDING" }] },
+    { "collectionGroup": "donors", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "bloodGroup", "order": "ASCENDING" }, { "fieldPath": "verification", "order": "ASCENDING" }] },
+    { "collectionGroup": "donors", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "location.city", "order": "ASCENDING" }, { "fieldPath": "bloodGroup", "order": "ASCENDING" }, { "fieldPath": "verification", "order": "ASCENDING" }] }
   ],
   "fieldOverrides": []
 }

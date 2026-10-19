@@ -4,7 +4,7 @@
  * uses it to decide who may run the action.
  */
 export const PUBLIC_ACTIONS = [
-  "inventory:list", "hospitals:list", "hospitals:locations", "bloodRequests:nearbyPublic", "public:overview",
+  "inventory:list", "hospitals:list", "hospitals:locations", "bloodRequests:nearbyPublic", "public:overview", "contact:submit",
 ] as const;
 
 export const ADMIN_ACTIONS = [
@@ -12,8 +12,9 @@ export const ADMIN_ACTIONS = [
   "donors:list", "donors:setVerification", "donors:setStatus",
   "bloodRequests:updateStatus", "bloodRequests:assignDonors", "bloodRequests:openEmergencyCount",
   "donations:listAll", "donations:updateStatus",
-  "hospitals:save", "hospitals:saveLocation", "inventory:adjust",
+  "hospitals:save", "hospitals:remove", "hospitals:saveLocation", "inventory:adjust", "inventory:movements",
   "notifications:broadcast", "notifications:broadcastHistory",
+  "contactMessages:list", "contactMessages:setStatus", "contactMessages:newCount",
   "dashboard:adminOverview", "dashboard:reports", "dashboard:activityLog",
   "system:seed", "system:status", "system:getSettings", "system:saveSettings",
 ] as const;

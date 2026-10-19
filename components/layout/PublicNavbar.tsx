@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { LayoutDashboard, Menu, ShieldCheck, X } from "lucide-react";
 import { Logo } from "./Logo";
 import { ButtonLink } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,13 @@ const links = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function PublicNavbar() {
+export interface NavbarAccount { name: string; role?: string }
+
+export function PublicNavbar({ account }: { account?: NavbarAccount | null }) {
+  const isAdmin = account?.role === "admin";
+  const home = isAdmin ? "/admin" : "/dashboard";
+  const homeLabel = isAdmin ? "Admin console" : "My dashboard";
+  const HomeIcon = isAdmin ? ShieldCheck : LayoutDashboard;
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   return (
@@ -38,9 +44,18 @@ export function PublicNavbar() {
           </ul>
         </nav>
         <div className="ml-auto hidden items-center gap-2 lg:flex">
-          <ButtonLink href="/auth/login" variant="ghost">Log in</ButtonLink>
-          <ButtonLink href="/dashboard/request" variant="outline">Request blood</ButtonLink>
-          <ButtonLink href="/auth/register">Become a donor</ButtonLink>
+          {account ? (
+            <>
+              {!isAdmin && <ButtonLink href="/dashboard/request" variant="outline">Request blood</ButtonLink>}
+              <ButtonLink href={home} icon={<HomeIcon className="h-4 w-4" aria-hidden />}>{homeLabel}</ButtonLink>
+            </>
+          ) : (
+            <>
+              <ButtonLink href="/auth/login" variant="ghost">Log in</ButtonLink>
+              <ButtonLink href="/dashboard/request" variant="outline">Request blood</ButtonLink>
+              <ButtonLink href="/auth/register">Become a donor</ButtonLink>
+            </>
+          )}
         </div>
         <button onClick={() => setOpen((o) => !o)} className="ml-auto rounded p-2 text-ink-700 hover:bg-ink-50 lg:hidden" aria-expanded={open} aria-controls="mobile-menu" aria-label={open ? "Close menu" : "Open menu"}>
           {open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
@@ -58,9 +73,18 @@ export function PublicNavbar() {
             ))}
           </ul>
           <div className="mt-4 grid gap-2">
-            <ButtonLink href="/auth/register" size="lg">Become a donor</ButtonLink>
-            <ButtonLink href="/dashboard/request" variant="outline" size="lg">Request blood</ButtonLink>
-            <ButtonLink href="/auth/login" variant="ghost" size="lg">Log in</ButtonLink>
+            {account ? (
+              <>
+                <ButtonLink href={home} size="lg" icon={<HomeIcon className="h-4 w-4" aria-hidden />}>{homeLabel}</ButtonLink>
+                {!isAdmin && <ButtonLink href="/dashboard/request" variant="outline" size="lg">Request blood</ButtonLink>}
+              </>
+            ) : (
+              <>
+                <ButtonLink href="/auth/register" size="lg">Become a donor</ButtonLink>
+                <ButtonLink href="/dashboard/request" variant="outline" size="lg">Request blood</ButtonLink>
+                <ButtonLink href="/auth/login" variant="ghost" size="lg">Log in</ButtonLink>
+              </>
+            )}
           </div>
         </div>
       )}

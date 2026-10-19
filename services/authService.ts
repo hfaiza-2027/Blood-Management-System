@@ -1,11 +1,11 @@
 import type { AuthSession, User } from "@/types";
-import { currentUser } from "@/data/mockUsers";
 import { AREA_POINTS } from "@/data/locations";
-import { mock, ApiError } from "./client";
-import { firebaseConfigured, firebaseAuth, firestore } from "@/lib/firebase/client";
+import { ApiError } from "./client";
+import { firebaseAuth, firestore } from "@/lib/firebase/client";
 import { doc, getDoc } from "firebase/firestore";
 import {
   EmailAuthProvider,
+  confirmPasswordReset,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   reauthenticateWithCredential,
@@ -15,12 +15,11 @@ import {
   signOut,
   updatePassword,
   updateProfile,
+  type Auth,
 } from "firebase/auth";
 
 export interface LoginInput { email: string; password: string }
 export interface RegisterInput { fullName: string; email: string; phone: string; password: string; city: string; area: string; bloodGroup: string; dateOfBirth: string; gender: string; address: string }
-
-const LIVE = () => firebaseConfigured && Boolean(firebaseAuth);
 
 /** Turn Firebase error codes into sentences people can act on. */
 export function authMessage(e: unknown, fallback = "Something went wrong. Try again."): string {
@@ -43,6 +42,12 @@ export function authMessage(e: unknown, fallback = "Something went wrong. Try ag
   return e instanceof Error && !code ? e.message : fallback;
 }
 
+/** Firebase Auth for browser-only calls, or a clear error when the app isn't configured. */
+function auth(): Auth {
+  if (!firebaseAuth) throw new ApiError("Sign-in isn't available: the Firebase web settings (NEXT_PUBLIC_FIREBASE_*) are missing.", 503);
+  return firebaseAuth;
+}
+
 async function startSession(idToken: string, profile?: Record<string, unknown>) {
   const res = await fetch("/api/auth/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken, profile }) });
   const body = await res.json().catch(() => ({}));
@@ -51,28 +56,23 @@ async function startSession(idToken: string, profile?: Record<string, unknown>) 
 }
 
 export const authService = {
-  isLive: LIVE,
-
   async login({ email, password }: LoginInput): Promise<AuthSession> {
-    if (!LIVE()) {
-      const admin = email.trim().toLowerCase().endsWith("@bloodbridge.pk");
-      return mock({ user: { ...currentUser, role: admin ? "admin" : currentUser.role }, token: "mock-token", expiresAt: new Date(Date.now() + 86_400_000).toISOString() }, 500);
-    }
+    const a = auth();
     try {
-      const cred = await signInWithEmailAndPassword(firebaseAuth!, email.trim(), password);
+      const cred = await signInWithEmailAndPassword(a, email.trim(), password);
       const token = await cred.user.getIdToken(true);
       const user = await startSession(token);
       return { user: { ...user, id: cred.user.uid }, token, expiresAt: new Date(Date.now() + 5 * 86_400_000).toISOString() };
     } catch (e) {
-      if (firebaseAuth?.currentUser) await signOut(firebaseAuth).catch(() => undefined);
+      if (a.currentUser) await signOut(a).catch(() => undefined);
       throw new ApiError(e instanceof ApiError ? e.message : authMessage(e, "We couldn't log you in. Try again."), 401);
     }
   },
 
   async register(input: RegisterInput): Promise<{ userId: string; email: string }> {
-    if (!LIVE()) return mock({ userId: "u-new", email: input.email }, 900);
+    const a = auth();
     try {
-      const cred = await createUserWithEmailAndPassword(firebaseAuth!, input.email.trim(), input.password);
+      const cred = await createUserWithEmailAndPassword(a, input.email.trim(), input.password);
       await updateProfile(cred.user, { displayName: input.fullName });
       const point = AREA_POINTS[input.city]?.[input.area] ?? { lat: 31.4697, lng: 74.2728 };
       const token = await cred.user.getIdToken(true);
@@ -97,24 +97,29 @@ export const authService = {
   },
 
   async requestPasswordReset(email: string) {
-    if (!LIVE()) return mock({ sent: Boolean(email) }, 500);
     try {
-      await sendPasswordResetEmail(firebaseAuth!, email.trim());
+      await sendPasswordResetEmail(auth(), email.trim());
     } catch (e) {
       // Don't reveal whether an account exists; only surface real input/network problems.
       const code = (e as { code?: string })?.code;
+      if (e instanceof ApiError) throw e;
       if (code && code !== "auth/user-not-found") throw new ApiError(authMessage(e), 400);
     }
     return { sent: true };
   },
 
-  async resetPassword(_token: string, _password: string) {
-    return { ok: true };
+  async resetPassword(oobCode: string, password: string) {
+    if (!oobCode) throw new ApiError("This reset link is incomplete. Open the link from your email again.", 400);
+    try {
+      await confirmPasswordReset(auth(), oobCode, password);
+      return { ok: true };
+    } catch (e) {
+      throw new ApiError(e instanceof ApiError ? e.message : authMessage(e, "This reset link is invalid or expired."), 400);
+    }
   },
 
   async changePassword(current: string, next: string) {
-    if (!LIVE()) return mock({ ok: true }, 800);
-    const u = firebaseAuth?.currentUser;
+    const u = auth().currentUser;
     if (!u?.email) throw new ApiError("Log out and log in again before changing your password.", 401);
     try {
       await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, current));
@@ -127,13 +132,10 @@ export const authService = {
     }
   },
 
-  async verifyOtp(code: string) {
-    if (code === "000000") throw new ApiError("That code has expired. Request a new one.", 400);
-    return mock({ ok: true }, 600);
-  },
-
-  async resendCode() {
-    if (LIVE() && firebaseAuth?.currentUser) await sendEmailVerification(firebaseAuth.currentUser);
+  async resendVerification() {
+    const u = auth().currentUser;
+    if (!u) throw new ApiError("Log in again to resend the verification email.", 401);
+    await sendEmailVerification(u);
     return { ok: true };
   },
 
@@ -149,16 +151,15 @@ export const authService = {
   async getCurrentUser(): Promise<User> {
     if (typeof window === "undefined") {
       const server = globalThis.__bloodbridgeServer;
-      if (server?.configured) {
-        const user = (await server.currentUser()) as User | null;
-        if (!user) throw new ApiError("Authentication required.", 401);
-        return user;
-      }
-      return mock(currentUser, 150);
+      if (!server?.configured) throw new ApiError("The server's Firebase settings are missing.", 503);
+      const user = (await server.currentUser()) as User | null;
+      if (!user) throw new ApiError("Authentication required.", 401);
+      return user;
     }
-    if (!firebaseAuth || !firestore) return mock(currentUser, 150);
+    const a = auth();
+    if (!firestore) throw new ApiError("The Firebase web settings are missing.", 503);
     return new Promise((resolve, reject) => {
-      const unsub = onAuthStateChanged(firebaseAuth!, async (u) => {
+      const unsub = onAuthStateChanged(a, async (u) => {
         unsub();
         if (!u) return reject(new ApiError("Authentication required.", 401));
         const snap = await getDoc(doc(firestore!, "users", u.uid));

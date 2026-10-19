@@ -34,9 +34,9 @@ const config: Config = {
         },
         paper: "#F6F7F9",
         line: "#E3E7ED",
-        ok: { 50: "#ECF7F1", 100: "#D3EEDF", 600: "#1F7A55", 700: "#17603F" },
-        warn: { 50: "#FDF6E7", 100: "#FAE9C2", 600: "#A86B06", 700: "#8A5705" },
-        info: { 50: "#EEF4FB", 100: "#D8E6F6", 600: "#2563A8", 700: "#1D4F87" },
+        ok: { 50: "#ECF7F1", 100: "#D3EEDF", 200: "#A8DCC1", 600: "#1F7A55", 700: "#17603F" },
+        warn: { 50: "#FDF6E7", 100: "#FAE9C2", 200: "#F3D48A", 600: "#A86B06", 700: "#8A5705" },
+        info: { 50: "#EEF4FB", 100: "#D8E6F6", 200: "#B3CDEC", 600: "#2563A8", 700: "#1D4F87" },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
@@ -54,6 +54,7 @@ const config: Config = {
         "fade-in": { from: { opacity: "0" }, to: { opacity: "1" } },
         "slide-up": { from: { opacity: "0", transform: "translateY(8px)" }, to: { opacity: "1", transform: "translateY(0)" } },
         "fill-vial": { from: { transform: "scaleY(0)" }, to: { transform: "scaleY(1)" } },
+        "nav-progress": { "0%": { transform: "scaleX(0)" }, "40%": { transform: "scaleX(0.55)" }, "100%": { transform: "scaleX(0.9)" } },
         pulse_ring: { "0%": { boxShadow: "0 0 0 0 rgba(165,28,48,0.45)" }, "100%": { boxShadow: "0 0 0 10px rgba(165,28,48,0)" } },
       },
       animation: {
@@ -61,6 +62,7 @@ const config: Config = {
         "slide-up": "slide-up 200ms ease-out",
         "fill-vial": "fill-vial 900ms cubic-bezier(.2,.7,.2,1) both",
         "pulse-ring": "pulse_ring 1.6s ease-out infinite",
+        "nav-progress": "nav-progress 8s cubic-bezier(.1,.7,.2,1) forwards",
       },
     },
   },

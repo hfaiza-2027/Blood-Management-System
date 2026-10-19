@@ -19,7 +19,7 @@ Next.js already sends each page's code separately, so a member never downloads a
 
 ### Accounts and sign-in
 - Register in 3 steps (details, health basics, location), with email verification.
-- Log in and log out. After login you return to the page you were trying to open.
+- Log in and log out. Members return to the page they were opening; admins always start in the admin console. Signed-in visitors skip the login page and see their dashboard link in the public navbar.
 - Forgot password sends a Firebase reset email. Change password from Settings (asks for the current password first).
 - Sessions last 5 days in an httpOnly cookie. "Sign out of all devices" ends every session.
 - Suspended accounts can't log in or use the API.
@@ -44,12 +44,14 @@ Next.js already sends each page's code separately, so a member never downloads a
 - **Blood requests:** view, change status (each change notifies the requester and adds to the timeline), alert chosen donors.
 - **Emergency queue:** open emergencies with time left, alert donors, mark fulfilled. The sidebar badge shows the live count.
 - **Donations:** mark completed (issues a certificate and updates the donor's totals and last donation date), cancelled or deferred.
-- **Blood inventory:** add or remove units with a reason; stock never goes below zero.
+- **Blood inventory:** add or remove units with a reason; stock never goes below zero; every change is kept in a movement history (transactional, so two coordinators can't overwrite each other).
 - **Blood groups:** supply and demand per group and the compatibility matrix.
-- **Hospitals & blood banks:** add, edit and verify facilities.
+- **Hospitals & blood banks:** add, edit, verify and remove facilities (removal is blocked while a facility has open requests).
 - **Locations:** add cities and areas, remove areas.
-- **Reports:** 12-month donations, requests and fulfilment rate; demand by group and city; CSV export.
-- **Notifications:** broadcast to everyone, one blood group or one city (max 280 characters), with sent history.
+- **Reports:** any period (presets or custom up to two years) filtered by city, blood group, urgency and facility; comparison with the previous period; fulfilment, on-time emergencies, response and fulfilment times; demand vs supply per group; cities; top facilities; appointment outcomes; donor verification; stock in/out. Full CSV export and Print / PDF.
+- **Inbox:** messages from the public contact form (new / open / resolved) and the admin's own notifications. The bell and sidebar badge show what's waiting.
+- **Broadcasts:** send to everyone, all donors, one blood group or one city (max 280 characters), with sent history.
+- **My account:** admins edit their own name and phone, change password and sign out everywhere without leaving the console.
 - **Activity log:** every important action, searchable and filterable.
 - **System settings:** organisation details, matching rules, switches, **maintenance mode** (pauses new requests and bookings for members), and **Load starter data**.
 
@@ -58,7 +60,8 @@ Next.js already sends each page's code separately, so a member never downloads a
 - Loading skeletons, empty states, error pages, a 404 page, and toasts after every action.
 - If an action fails, the screen goes back to how it was and a clear message is shown.
 - Keyboard and screen-reader support: labelled fields, focus rings, text tables for charts, native dialogs.
-- **Demo mode:** with no Firebase keys, the app runs on built-in sample data (see README).
+- **Setup screen:** if Firebase settings are missing, every page lists the variables to add instead of running half-configured. There is no demo mode.
+- **Page progress bar** on every navigation, and dashboards that keep working when one section fails to load.
 
 ## 3. Validations
 
@@ -71,7 +74,8 @@ Every rule marked **server** runs in `lib/server/validate.ts`, whoever calls the
 | Register | Date of birth at least 16 years ago; gender, blood group, city and area required; terms accepted | ✓ | – |
 | Login | Email format; password required; wrong credentials give a clear message | ✓ | Firebase |
 | Reset / change password | Same password rules; the new password must differ; current password re-checked | ✓ | Firebase |
-| OTP (demo) | Exactly 6 digits | ✓ | – |
+| Contact form | Name 2–80 characters; valid email; optional Pakistani mobile; topic from the list; message 10–2,000 characters; hidden spam trap | ✓ | ✓ |
+| Report filters | Valid dates, start before end, at most two years; known blood group and urgency | ✓ | ✓ |
 | Profile | Name ≥ 2 characters; valid mobile; valid blood group; emergency contact phone valid if given | ✓ | ✓ |
 | Profile | Members can't change role, status, verification or email | – | ✓ |
 | Donor registration | Valid blood group; age 18–65; weight 50–250 kg; availability from the list; listed city; all health questions answered | ✓ | ✓ (except questions) |
@@ -95,10 +99,10 @@ Every rule marked **server** runs in `lib/server/validate.ts`, whoever calls the
 Things to know before relying on BloodBridge for real patients:
 
 1. **SMS, email and WhatsApp alerts aren't sent.** Notifications appear inside the app only. The switches in Settings are saved but no messages leave the app. Connecting a provider (for example Twilio or the WhatsApp Business API) is a separate task.
-2. **Two-factor authentication is demo-only.** It's hidden when Firebase is configured, because SMS sign-in requires upgrading Firebase to Identity Platform.
+2. **No two-factor authentication.** SMS sign-in requires upgrading Firebase to Identity Platform.
 3. **Location is area-level.** Distance is measured between area centre points (for example Johar Town to Gulberg), not live GPS. Only the cities and areas in the list have coordinates. New areas added from Locations fall back to the city's first area point.
-4. **Search reads whole collections.** Donor search, lists and reports load every document and filter on the server. That's fine for a few thousand records; beyond that it needs Firestore indexes, geo-hash queries and pagination.
-5. **Stock is network-wide, not per blood bank.** Inventory holds one number per blood group, and adjustments don't use Firestore transactions, so two admins changing the same group at the same moment could overwrite each other.
+4. **Admin tables load whole collections.** Users, donors, requests and donations are paginated in the browser. Dashboards, reports, badges and public pages use counts and date-range queries instead. Donor search narrows by city on the server. Beyond several thousand records, move the admin tables to server-side pagination and add geo-hash queries for distance.
+5. **Stock is network-wide, not per blood bank.** Inventory holds one number per blood group (adjustments are transactional and logged).
 6. **Matching rules and most switches are stored but not enforced**, except maintenance mode. Search radius, auto-expiry, "only alert verified donors" and "manual approval" don't change behaviour yet, and requests don't expire automatically.
 7. **Profile photos aren't uploaded.** You can preview a photo but it isn't saved (Firebase Storage isn't wired up).
 8. **Email change isn't supported in-app.** It needs Firebase's verify-before-update flow.
@@ -106,19 +110,21 @@ Things to know before relying on BloodBridge for real patients:
 10. **Eligibility is a guide, not medical advice.** Staff at the centre decide. The rules are simplified (age, weight, 90-day gap, a few questions).
 11. **Password reset opens Firebase's own page** unless you set the custom action URL (see FIREBASE_SETUP.md, E4).
 12. **The certificate is a number, not a PDF.**
-13. **No rate limiting or App Check** on the API routes. Add these before going public.
+13. **No rate limiting or App Check** on the API routes. The contact form has a spam trap but no rate limit. Add these before going public.
 14. **English only.** No Urdu interface yet.
+15. **Testimonials and the about-page story are sample copy.** Replace them with real quotes before launch.
 
 ## 5. Automated tests
 
-`npm test` runs 57 tests in under a second, without Firebase or the internet:
+`npm test` runs 77 tests in under a second, without Firebase or the internet:
 
 | File | Covers |
 | --- | --- |
-| `tests/unit.test.ts` | Email, phone, password, OTP and range rules; eligibility; blood compatibility; distance; Pakistan-time dates; phone masking |
+| `tests/unit.test.ts` | Email, phone, password and range rules; eligibility; blood compatibility; distance; Pakistan-time dates; phone masking |
 | `tests/access.test.ts` | Every action has a handler in the right module; every service call exists; public, member and admin access; endpoint separation; suspended users; profile edit restrictions; admin self-protection |
 | `tests/workflows.test.ts` | Starter data; create, respond, cancel and fulfil requests; donor alerts; donor search filters and privacy; availability; booking and completing donations; maintenance mode; broadcasts; notifications; inventory; locations; facilities; dashboards; sign out everywhere; suspend and delete |
 | `tests/validation.test.ts` | Server-side rejection of bad requests, appointments, donor data, profile edits and admin input |
+| `tests/improvements.test.ts` | Post-login routing per role; report ranges, buckets and previous period; report KPIs, filters and server validation; stock movements and cache refresh; transactional responses and request timestamps; phone masking; public feed privacy; facility removal; contact form and inbox; admin input values |
 | `tests/architecture.test.ts` | The client and admin modules never import each other; browser code never reaches server-only code; no `redirect()` inside try/catch in layouts; every sidebar link has a page |
 
 The data-layer tests run the real handlers in `lib/server` against an in-memory Firestore (`tests/mocks/firestore.cjs`), so they check the actual logic, not a copy of it. They can't check the browser UI, real Firebase security rules, or network behaviour. The manual guide in `TESTING.md` covers those.

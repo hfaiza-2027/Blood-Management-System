@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Public_Sans, Newsreader } from "next/font/google";
 import { ToastProvider } from "@/components/ui/Toast";
+import { NavigationProgress } from "@/components/system/NavigationProgress";
+import { SetupRequired } from "@/components/system/SetupRequired";
+import { missingConfig } from "@/lib/config";
 import "./globals.css";
 import "@/lib/firebase/server";
 
@@ -28,10 +31,20 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const missing = missingConfig();
   return (
     <html lang="en" className={`${sans.variable} ${display.variable}`}>
       <body>
-        <ToastProvider>{children}</ToastProvider>
+        {missing.length > 0 ? (
+          <SetupRequired missing={missing} />
+        ) : (
+          <ToastProvider>
+            <Suspense fallback={null}>
+              <NavigationProgress />
+            </Suspense>
+            {children}
+          </ToastProvider>
+        )}
       </body>
     </html>
   );

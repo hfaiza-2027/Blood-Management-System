@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Activity, BadgeCheck, ClipboardList, Droplets, HandHeart, Siren, Users } from "lucide-react";
+import { Activity, BadgeCheck, CircleCheck, ClipboardList, Droplets, HandHeart, Siren, Users } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
@@ -8,27 +8,27 @@ import { BloodGroupBadge } from "@/components/ui/BloodGroupBadge";
 import { StockBadge } from "@/components/ui/StatusBadge";
 import { StatisticCard } from "@/components/blood/StatisticCard";
 import { BloodRequestCard } from "@/components/blood/BloodRequestCard";
-import { BarChart, ChartCard, DonutChart, HBarList, LineChart } from "@/components/charts/Charts";
+import { BarChart, ChartCard, DonutChart, DualBarChart, HBarList } from "@/components/charts/Charts";
+import { EmptyState } from "@/components/ui/States";
 import { dashboardService } from "@/services/dashboardService";
-import { bloodRequestService, isOpen } from "@/services/bloodRequestService";
-import { inventoryService, stockLevel } from "@/services/inventoryService";
+import { stockLevel } from "@/services/inventoryService";
 import { formatNumber, timeAgo } from "@/lib/utils";
 import { Alert } from "@/components/ui/Alert";
 
 export const metadata: Metadata = { title: "Overview" };
 
 export default async function AdminOverviewPage() {
-  const [o, requests, inventory] = await Promise.all([dashboardService.adminOverview(), bloodRequestService.list(), inventoryService.list()]);
+  const o = await dashboardService.adminOverview();
   const s = o.stats;
-  const emergencies = requests.filter((r) => isOpen(r) && r.urgency === "emergency").slice(0, 2);
-  const lowStock = inventory.filter((i) => stockLevel(i) !== "normal").sort((a, b) => a.available / a.required - b.available / b.required);
+  const { emergencies, inventory } = o;
+  const lowStock = inventory.filter((i) => stockLevel(i) !== "normal").sort((a, b) => a.available / Math.max(1, a.required) - b.available / Math.max(1, b.required));
   const donorTotal = o.donorGroupDistribution.reduce((a, b) => a + b.value, 0);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Overview"
-        description="Network health across all cities, updated every few minutes."
+        description="Network health across all cities. Figures are live each time you open this page."
         actions={<ButtonLink href="/admin/emergency" icon={<Siren className="h-4 w-4" aria-hidden />}>Emergency queue</ButtonLink>}
       />
 
@@ -41,7 +41,7 @@ export default async function AdminOverviewPage() {
       <section aria-label="Key figures" className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 2xl:grid-cols-6">
         <StatisticCard label="Total users" value={formatNumber(s.totalUsers)} icon={<Users className="h-4 w-4" aria-hidden />} hint="Registered accounts" />
         <StatisticCard label="Active donors" value={formatNumber(s.activeDonors)} icon={<BadgeCheck className="h-4 w-4" aria-hidden />} hint="Ready to donate" />
-        <StatisticCard label="Blood requests" value={formatNumber(s.bloodRequests)} icon={<ClipboardList className="h-4 w-4" aria-hidden />} hint="Last 12 months" />
+        <StatisticCard label="Blood requests" value={formatNumber(s.bloodRequests)} icon={<ClipboardList className="h-4 w-4" aria-hidden />} hint="All time" />
         <StatisticCard label="Completed donations" value={formatNumber(s.completedDonations)} icon={<HandHeart className="h-4 w-4" aria-hidden />} hint="All time" />
         <StatisticCard label="Emergency requests" value={s.emergencyRequests} icon={<Siren className="h-4 w-4" aria-hidden />} hint="Open right now" tone="blood" />
         <StatisticCard label="Available units" value={formatNumber(s.availableUnits)} icon={<Droplets className="h-4 w-4" aria-hidden />} hint="Across partner banks" />
@@ -57,10 +57,10 @@ export default async function AdminOverviewPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <ChartCard title="Donation trend" description="Month-on-month donations" className="xl:col-span-2">
-          <LineChart data={o.monthlyDonations} caption="Donation trend" />
+        <ChartCard title="Requests and donations" description="New requests against completed donations, last 12 months" className="xl:col-span-2" action={<Link href="/admin/reports" className="text-[13px] font-semibold text-hemo-700 hover:underline">Full reports</Link>}>
+          <DualBarChart data={o.monthlyRequests.map((r, i) => ({ label: r.label, a: r.value, b: o.monthlyDonations[i]?.value ?? 0 }))} series={["Requests", "Donations completed"]} caption="Monthly requests and donations" />
         </ChartCard>
-        <ChartCard title="Blood requests" description="Current status of this year's requests" action={<Link href="/admin/requests" className="text-[13px] font-semibold text-hemo-700 hover:underline">Manage</Link>}>
+        <ChartCard title="Blood requests" description="Status of requests from the last 12 months" action={<Link href="/admin/requests" className="text-[13px] font-semibold text-hemo-700 hover:underline">Manage</Link>}>
           <HBarList data={o.requestStatusBreakdown} caption="Requests by status" />
         </ChartCard>
       </div>
@@ -68,12 +68,17 @@ export default async function AdminOverviewPage() {
       <div className="grid gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <CardHeader title="Open emergencies" description="Needing action from coordinators" action={<Link href="/admin/emergency" className="text-[13px] font-semibold text-hemo-700 hover:underline">View all</Link>} />
-          <CardBody className="grid gap-4 md:grid-cols-2">
-            {emergencies.map((r) => <BloodRequestCard key={r.id} request={r} action={<ButtonLink size="sm" href={`/admin/emergency#${r.id}`} variant="outline">Coordinate</ButtonLink>} />)}
-          </CardBody>
+          {emergencies.length === 0 ? (
+            <EmptyState icon={<CircleCheck className="h-5 w-5" aria-hidden />} title="No open emergencies" description="New emergency requests will appear here first." className="border-0 shadow-none" />
+          ) : (
+            <CardBody className="grid gap-4 md:grid-cols-2">
+              {emergencies.map((r) => <BloodRequestCard key={r.id} request={r} action={<ButtonLink size="sm" href={`/admin/emergency#${r.id}`} variant="outline">Coordinate</ButtonLink>} />)}
+            </CardBody>
+          )}
         </Card>
         <Card>
           <CardHeader title="Stock alerts" description="Below weekly requirement" action={<Link href="/admin/inventory" className="text-[13px] font-semibold text-hemo-700 hover:underline">Inventory</Link>} />
+          {lowStock.length === 0 && <p className="px-5 py-6 text-sm text-ink-500">{inventory.length ? "Every group is at or above its weekly requirement." : "No stock records yet."}</p>}
           <ul className="divide-y divide-line">
             {lowStock.map((i) => (
               <li key={i.bloodGroup} className="flex items-center gap-3 px-5 py-3">
@@ -88,6 +93,7 @@ export default async function AdminOverviewPage() {
 
       <Card>
         <CardHeader title="Recent activity" action={<Link href="/admin/activity" className="text-[13px] font-semibold text-hemo-700 hover:underline">Activity log</Link>} />
+        {o.activity.length === 0 && <p className="px-5 py-6 text-sm text-ink-500">Actions by coordinators and members will be listed here.</p>}
         <ul className="divide-y divide-line">
           {o.activity.slice(0, 6).map((a) => (
             <li key={a.id} className="flex items-start gap-3 px-5 py-3 text-sm">

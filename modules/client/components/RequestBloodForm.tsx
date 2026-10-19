@@ -96,7 +96,6 @@ export function RequestBloodForm({ hospitals, initialUrgency, requester }: Props
           contactNumber: v.contactNumber,
           notes: v.notes || undefined,
         },
-        requester,
       );
       setCreated(req);
       toast.success("Blood request created successfully.", `${req.code} is pending review.`);
