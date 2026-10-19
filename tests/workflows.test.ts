@@ -14,7 +14,6 @@ async function seeded() {
 async function newRequest(overrides: Record<string, unknown> = {}) {
   return call("ahmed", "bloodRequests:create", {
     input: { bloodGroup: "O-", unitsRequired: 2, patientName: "Parveen Akhtar", patientAge: 34, hospitalId: "h1", hospitalAddress: "", city: "Lahore", requiredBy: "2030-01-01T10:00:00+05:00", urgency: "emergency", reason: "Surgery", contactNumber: "03001234567", ...overrides },
-    requester: { id: "ahmed", name: "Ahmed Hassan" },
   });
 }
 
@@ -31,7 +30,8 @@ test("starter data fills empty collections once and never overwrites", async () 
   const second = await call("admin", "system:seed");
   assert.deepEqual(second.written, {});
   const oNeg = (await call(null, "inventory:list")).find((i: any) => i.bloodGroup === "O-");
-  assert.equal(oNeg.available, 6 + 10, "seed must not reset stock");
+  assert.equal(oNeg.available, 10, "starter stock begins at zero and seeding again must not reset it");
+  assert.equal(oNeg.required, 30, "stock targets come from the starter data");
 });
 
 test("creating a request stores code, hospital name and area location", async () => {
@@ -154,7 +154,7 @@ test("booking a donation, blocking a second booking, and completing it", async (
   await rejects(call("ali", "donations:bookAppointment", { input: { centerId: "h4", date: D2, time: "10:00" } }), /already have an upcoming appointment/);
 
   const done = await call("admin", "donations:updateStatus", { id: d.id, status: "completed" });
-  assert.match(done.certificateId, /^QTR-\d{4}-\d{5}$/);
+  assert.match(done.certificateId, /^BB-\d{4}-\d{5}$/);
   const donor = db.dump("donors")[0];
   assert.equal(donor.totalDonations, 1);
   assert.equal(donor.lastDonationDate, d.date);
@@ -182,7 +182,8 @@ test("broadcast reaches only the chosen audience and is recorded", async () => {
   await call("hira", "donors:registerDonor", DONOR_INPUT("hira", "B+", "Karachi", "Clifton"));
   assert.equal((await call("admin", "notifications:broadcast", { input: { title: "O- needed", body: "Please book", audience: "group:O-" } })).sent, 1);
   assert.equal((await call("admin", "notifications:broadcast", { input: { title: "Karachi drive", body: "Clifton", audience: "city:Karachi" } })).sent, 1);
-  assert.equal((await call("admin", "notifications:broadcast", { input: { title: "Hello", body: "All", audience: "all" } })).sent, 5);
+  // "Everyone" means every active account; the suspended test user is left out.
+  assert.equal((await call("admin", "notifications:broadcast", { input: { title: "Hello", body: "All", audience: "all" } })).sent, 4);
   assert.equal((await call("ali", "notifications:list")).length, 2);
   assert.equal((await call("hira", "notifications:list")).length, 2);
   const history = await call("admin", "notifications:broadcastHistory");
@@ -230,9 +231,15 @@ test("admin dashboards and reports return complete 12-month series on an empty d
   assert.equal(o.monthlyDonations.length, 12);
   assert.equal(o.donorGroupDistribution.length, 8);
   assert.equal(o.stats.totalUsers, 5);
-  const r = await call("admin", "dashboard:reports");
-  for (const k of ["monthlyDonations", "monthlyRequests", "fulfillmentRate"]) assert.equal(r[k].length, 12, k);
-  assert.ok(Array.isArray(r.cityDemand));
+  const to = new Date().toISOString();
+  const from = new Date(Date.now() - 29 * 86_400_000).toISOString();
+  const r = await call("admin", "dashboard:reports", { filters: { from, to } });
+  assert.equal(r.bucket, "day");
+  assert.ok(r.trend.length >= 30 && r.trend.length <= 31);
+  assert.equal(r.kpis.requests.value, 0);
+  assert.equal(r.kpis.fulfilmentRate.value, null, "no requests means no rate, not 0%");
+  assert.ok(r.trend.every((t: any) => t.fulfilmentRate === null));
+  assert.equal(r.groups.length, 8);
 });
 
 test("sign out everywhere revokes the member's sessions", async () => {
