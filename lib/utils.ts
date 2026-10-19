@@ -5,14 +5,9 @@ export function cn(...classes: unknown[]): string {
 
 const DAY = 86_400_000;
 
-/** Fixed "today" for mock data so demo screens stay consistent across runs. */
-export const MOCK_NOW = new Date("2026-09-27T10:30:00+05:00");
-
-/** With Firebase configured the real clock is used; mock mode uses MOCK_NOW. */
-const LIVE_CLOCK = Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.NEXT_PUBLIC_API_URL);
-
+/** Current time. Kept as a function so code and tests share one source of "now". */
 export function now(): Date {
-  return LIVE_CLOCK ? new Date() : MOCK_NOW;
+  return new Date();
 }
 
 export function daysBetween(a: Date | string, b: Date | string): number {
@@ -73,15 +68,12 @@ export function ageFromDob(dob: string, from: Date = now()): number {
   return age;
 }
 
+/** Greeting for the hour in Pakistan, so the server (often UTC) and the browser agree. */
 export function greeting(d: Date = new Date()): string {
-  const h = d.getHours();
+  const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, hour: "numeric", hourCycle: "h23" }).format(d));
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
-}
-
-export function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
 }
 
 export function formatNumber(n: number): string {

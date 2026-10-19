@@ -1,6 +1,13 @@
-import type { Hospital } from "@/types";
+import type { BloodInventory, Hospital } from "@/types";
 
-export const mockHospitals: Hospital[] = [
+/**
+ * Optional starter records written by Admin → Settings → "Load starter data".
+ * They are only written into empty collections and can be edited or removed
+ * afterwards. Nothing in the running app reads these directly.
+ */
+
+/** Sample partner facilities so booking and request forms have choices on day one. */
+export const STARTER_HOSPITALS: Hospital[] = [
   { id: "h1", name: "Ravi Valley General Hospital", type: "hospital", address: "42 Main Boulevard, Gulberg III", city: "Lahore", area: "Gulberg", phone: "042 3575 1100", email: "bloodbank@ravivalley.pk", openingHours: "Open 24 hours", availableGroups: ["A+", "B+", "O+", "AB+", "O-"], verified: true },
   { id: "h2", name: "Johar Medical Complex", type: "hospital", address: "Block G1, Johar Town", city: "Lahore", area: "Johar Town", phone: "042 3530 8800", email: "transfusion@joharmedical.pk", openingHours: "Open 24 hours", availableGroups: ["A+", "A-", "B+", "O+", "AB+"], verified: true },
   { id: "h3", name: "Shalimar Heart & Trauma Centre", type: "hospital", address: "11 Jail Road, Shadman", city: "Lahore", area: "Shadman", phone: "042 3758 2200", email: "er@shalimarheart.pk", openingHours: "Open 24 hours", availableGroups: ["O+", "O-", "B+", "A+"], verified: true },
@@ -13,4 +20,19 @@ export const mockHospitals: Hospital[] = [
   { id: "h10", name: "Clifton Care Hospital", type: "hospital", address: "Block 5, Clifton", city: "Karachi", area: "Clifton", phone: "021 3583 4400", email: "bloodservices@cliftoncare.pk", openingHours: "Open 24 hours", availableGroups: ["A+", "B+", "O+", "AB+", "A-"], verified: true },
   { id: "h11", name: "Margalla Medical Institute", type: "hospital", address: "Jinnah Super Market Road, F-7", city: "Islamabad", area: "F-7", phone: "051 265 1200", email: "transfusion@margallamed.pk", openingHours: "Open 24 hours", availableGroups: ["A+", "B+", "O+", "O-", "AB-"], verified: true },
   { id: "h12", name: "Lyallpur Blood Services", type: "blood_bank", address: "Susan Road, near Madina Town", city: "Faisalabad", area: "Susan Road", phone: "041 872 3300", email: "hello@lyallpurblood.pk", openingHours: "8:00 – 20:00 daily", availableGroups: ["A+", "B+", "O+", "AB+"], verified: false },
+];
+
+/**
+ * Stock targets per blood group. Units start at zero: real stock is entered by
+ * coordinators in Admin → Blood inventory so reports never show invented numbers.
+ */
+export const STOCK_TARGETS: Pick<BloodInventory, "bloodGroup" | "required" | "capacity">[] = [
+  { bloodGroup: "A+", required: 90, capacity: 220 },
+  { bloodGroup: "A-", required: 20, capacity: 50 },
+  { bloodGroup: "B+", required: 120, capacity: 260 },
+  { bloodGroup: "B-", required: 18, capacity: 45 },
+  { bloodGroup: "O+", required: 130, capacity: 260 },
+  { bloodGroup: "O-", required: 30, capacity: 70 },
+  { bloodGroup: "AB+", required: 25, capacity: 80 },
+  { bloodGroup: "AB-", required: 8, capacity: 25 },
 ];

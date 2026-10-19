@@ -1,7 +1,16 @@
 import type { ReactNode } from "react";
 import { Logo } from "@/components/layout/Logo";
+import { dashboardService, EMPTY_PUBLIC_OVERVIEW } from "@/services/dashboardService";
+import { safe } from "@/services/client";
+import { formatNumber } from "@/lib/utils";
 
-export default function AuthLayout({ children }: { children: ReactNode }) {
+export default async function AuthLayout({ children }: { children: ReactNode }) {
+  const stats = await safe(dashboardService.publicOverview(), EMPTY_PUBLIC_OVERVIEW);
+  const figures: [string, string][] = [
+    [formatNumber(stats.activeDonors), "active donors"],
+    [formatNumber(stats.facilities), "partner facilities"],
+    [formatNumber(stats.donationsArranged), "donations completed"],
+  ];
   return (
     <div className="grid min-h-screen bg-white lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       <aside className="relative hidden overflow-hidden bg-ink-900 p-12 text-white lg:flex lg:flex-col">
@@ -11,7 +20,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <p className="mt-4 text-ink-300">Hira Nadeem, O-negative donor since 2023</p>
         </div>
         <dl className="mt-12 grid grid-cols-3 gap-6 border-t border-white/10 pt-8 text-sm">
-          {[["4,349", "active donors"], ["12", "partner facilities"], ["38 min", "median first reply"]].map(([v, l]) => (
+          {figures.map(([v, l]) => (
             <div key={l}>
               <dt className="text-ink-300">{l}</dt>
               <dd className="mt-1 text-xl font-bold tabular-nums">{v}</dd>

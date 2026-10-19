@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState, type FormEvent } from "react";
-import { Building2, Pencil, Plus, ShieldCheck } from "lucide-react";
+import { Building2, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import type { BloodGroup, FacilityType, Hospital } from "@/types";
 import { hospitalService } from "@/services/hospitalService";
 import { useListControls } from "./useListControls";
@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { FilterSelect, Input, SearchInput, Select } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Tabs } from "@/components/ui/Tabs";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Pagination } from "@/components/ui/Pagination";
@@ -35,6 +36,8 @@ export function HospitalsManager({ initial }: { initial: Hospital[] }) {
   const [groups, setGroups] = useState<BloodGroup[]>([]);
   const [errors, setErrors] = useState<Errors<FormValues>>({});
   const [busy, setBusy] = useState(false);
+  const [removing, setRemoving] = useState<Hospital | null>(null);
+  const [removeBusy, setRemoveBusy] = useState(false);
 
   const filter = useCallback((h: Hospital) => (tab === "all" || h.type === tab) && (city === "any" || h.city === city), [tab, city]);
   const list = useListControls(rows, filter, {
@@ -106,10 +109,26 @@ export function HospitalsManager({ initial }: { initial: Hospital[] }) {
     }
   }
 
+  async function remove() {
+    if (!removing) return;
+    setRemoveBusy(true);
+    try {
+      await hospitalService.remove(removing.id);
+      setRows((xs) => xs.filter((x) => x.id !== removing.id));
+      toast.success(`${removing.name} removed.`);
+      setRemoving(null);
+    } catch (err) {
+      toast.error("Couldn't remove this facility.", err instanceof Error ? err.message : "Please try again.");
+    } finally {
+      setRemoveBusy(false);
+    }
+  }
+
   const actions = (h: Hospital) => (
     <div className="flex justify-end gap-2">
       <Button size="sm" variant="ghost" icon={<ShieldCheck className="h-4 w-4" aria-hidden />} onClick={() => toggleVerified(h)}>{h.verified ? "Unverify" : "Verify"}</Button>
       <Button size="sm" variant="outline" icon={<Pencil className="h-4 w-4" aria-hidden />} onClick={() => openForm(h)}>Edit</Button>
+      <Button size="sm" variant="ghost" icon={<Trash2 className="h-4 w-4" aria-hidden />} onClick={() => setRemoving(h)} aria-label={`Remove ${h.name}`} />
     </div>
   );
 
@@ -219,6 +238,17 @@ export function HospitalsManager({ initial }: { initial: Hospital[] }) {
           )}
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={removing !== null}
+        title={`Remove ${removing?.name ?? "this facility"}?`}
+        description="It will no longer appear in booking and request forms. Facilities with open requests can't be removed."
+        confirmLabel="Remove facility"
+        cancelLabel="Cancel"
+        loading={removeBusy}
+        onCancel={() => setRemoving(null)}
+        onConfirm={remove}
+      />
     </>
   );
 }

@@ -24,7 +24,7 @@ const ICONS: Record<NotificationKind, { icon: typeof Bell; className: string }> 
 
 type Filter = "all" | "unread" | "emergency";
 
-export function NotificationCenter({ initial }: { initial: Notification[] }) {
+export function NotificationCenter({ initial, emptyText = "Emergency alerts near you, request updates and appointment reminders will appear here." }: { initial: Notification[]; emptyText?: string }) {
   const toast = useToast();
   const router = useRouter();
   const [items, setItems] = useState(initial);
@@ -81,13 +81,13 @@ export function NotificationCenter({ initial }: { initial: Notification[] }) {
         <EmptyState
           icon={<BellOff className="h-6 w-6" aria-hidden />}
           title={filter === "unread" ? "You're all caught up" : "No notifications here"}
-          description="Emergency alerts near you, request updates and appointment reminders will appear here."
+          description={emptyText}
           className="border-0 shadow-none"
         />
       ) : (
         <ul className="divide-y divide-line">
           {rows.map((n) => {
-            const meta = ICONS[n.kind];
+            const meta = ICONS[n.kind] ?? ICONS.announcement;
             const Icon = meta.icon;
             return (
               <li key={n.id} className={cn("flex gap-3 px-4 py-4 sm:gap-4", !n.read && "bg-hemo-50/40")}>

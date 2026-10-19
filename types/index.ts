@@ -7,3 +7,4 @@ export * from "./hospital";
 export * from "./inventory";
 export * from "./notification";
 export * from "./dashboard";
+export * from "./report";

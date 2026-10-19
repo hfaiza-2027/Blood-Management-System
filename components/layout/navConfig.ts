@@ -1,6 +1,6 @@
 import {
   Activity, BarChart3, Bell, Building2, CalendarHeart, ClipboardList, Droplet, FileClock, HandHeart, HeartPulse,
-  History, LayoutDashboard, MapPinned, Package, Search, Settings, Siren, UserRound, Users, BadgeCheck,
+  History, Inbox, LayoutDashboard, Megaphone, MapPinned, Package, Search, Settings, Siren, UserRound, Users, BadgeCheck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -73,9 +73,10 @@ export const adminNav: NavGroup[] = [
     label: "System",
     items: [
       { label: "Reports", href: "/admin/reports", icon: BarChart3 },
-      { label: "Notifications", href: "/admin/notifications", icon: Bell },
+      { label: "Inbox", href: "/admin/inbox", icon: Inbox },
+      { label: "Broadcasts", href: "/admin/notifications", icon: Megaphone },
       { label: "Activity log", href: "/admin/activity", icon: Activity },
-      { label: "Settings", href: "/admin/settings", icon: Settings },
+      { label: "System settings", href: "/admin/settings", icon: Settings },
     ],
   },
 ];

@@ -1,7 +1,7 @@
 /* Shared server-only helpers for the admin and client data handlers. */
-import { Timestamp, type Firestore } from "firebase-admin/firestore";
+import { Timestamp, type Firestore, type Query } from "firebase-admin/firestore";
 import { adminDb, getSessionUser } from "@/lib/firebase/admin";
-import { mockInventory } from "@/data/mockInventory";
+import { STOCK_TARGETS } from "@/data/starter";
 import { AREA_POINTS } from "@/data/locations";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -28,9 +28,25 @@ export function serial<T>(v: T): T {
   return JSON.parse(JSON.stringify(v ?? null, (_k, x) => (x instanceof Timestamp ? x.toDate().toISOString() : x)));
 }
 
+/** Reads every document of a collection. Keep this for small collections (hospitals, locations, inventory). */
 export async function all(collection: string): Promise<Row[]> {
-  const snap = await db().collection(collection).get();
+  return rows(db().collection(collection));
+}
+
+/** Runs a query and returns plain rows with their ids. */
+export async function rows(query: Query): Promise<Row[]> {
+  const snap = await query.get();
   return snap.docs.map((d) => ({ ...d.data(), id: d.id }));
+}
+
+/** Documents whose ISO-string `field` falls inside [from, to]. Uses Firestore's automatic single-field index. */
+export async function inRange(collection: string, field: string, from: string, to: string): Promise<Row[]> {
+  return rows(db().collection(collection).where(field, ">=", from).where(field, "<=", to));
+}
+
+/** Server-side count without downloading documents. */
+export async function count(query: Query): Promise<number> {
+  return (await query.count().get()).data().count;
 }
 
 export async function one(collection: string, id: string): Promise<Row | undefined> {
@@ -52,6 +68,30 @@ export function withLocation(loc: any) {
 }
 
 export const nowIso = () => new Date().toISOString();
+
+/* ---------- short-lived cache ---------- */
+
+/**
+ * Per-instance memory cache for public, read-heavy data (home page stock,
+ * facility lists, network totals). Writes that change the data call
+ * invalidate(), so the instance that made the change shows it at once and
+ * other instances catch up within the TTL.
+ */
+const cache = new Map<string, { at: number; value: Promise<unknown> }>();
+
+export async function cached<T>(key: string, ttlMs: number, load: () => Promise<T>): Promise<T> {
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < ttlMs) return hit.value as Promise<T>;
+  const value = load();
+  cache.set(key, { at: Date.now(), value });
+  // A failed load must not stay cached.
+  value.catch(() => cache.delete(key));
+  return value;
+}
+
+export function invalidate(...prefixes: string[]) {
+  for (const key of [...cache.keys()]) if (prefixes.some((p) => key.startsWith(p))) cache.delete(key);
+}
 
 /* ---------- auth ---------- */
 
@@ -131,16 +171,32 @@ export function normaliseDonor(d: Row): Row {
 }
 
 export function normaliseInventory(i: Row) {
-  const base = mockInventory.find((m) => m.bloodGroup === (i.bloodGroup ?? i.id));
+  const target = STOCK_TARGETS.find((m) => m.bloodGroup === (i.bloodGroup ?? i.id));
   return {
     bloodGroup: i.bloodGroup ?? i.id,
     available: Number(i.available ?? 0),
     reserved: Number(i.reserved ?? 0),
     expired: Number(i.expired ?? 0),
-    required: Number(i.required ?? base?.required ?? 0),
-    capacity: Number(i.capacity ?? base?.capacity ?? 100),
+    required: Number(i.required ?? target?.required ?? 0),
+    capacity: Number(i.capacity ?? target?.capacity ?? 100),
     updatedAt: i.updatedAt ?? nowIso(),
   };
+}
+
+/* ---------- request timing ---------- */
+
+/** When a request became fulfilled: the stored field, or the timeline entry for older records. */
+export function fulfilledAt(r: Row): string | null {
+  if (r.fulfilledAt) return String(r.fulfilledAt);
+  const entry = Array.isArray(r.timeline) ? r.timeline.find((t: any) => t?.status === "fulfilled") : undefined;
+  return entry?.at ? String(entry.at) : null;
+}
+
+/** When the first donor responded or was found. */
+export function firstResponseAt(r: Row): string | null {
+  if (r.firstResponseAt) return String(r.firstResponseAt);
+  const entry = Array.isArray(r.timeline) ? r.timeline.find((t: any) => t?.status === "donor_found" || t?.status === "partially_fulfilled" || t?.status === "fulfilled") : undefined;
+  return entry?.at ? String(entry.at) : null;
 }
 
 /* ---------- side effects ---------- */
@@ -174,23 +230,33 @@ export function lastMonths(n = 12) {
   return out;
 }
 
-export function monthly(rows: Row[], field: string, where: (r: Row) => boolean = () => true) {
-  return lastMonths().map((m) => ({ label: m.label, value: rows.filter((r) => where(r) && String(r[field] ?? "").startsWith(m.key)).length }));
+export function monthly(rowsIn: Row[], field: string, where: (r: Row) => boolean = () => true) {
+  return lastMonths().map((m) => ({ label: m.label, value: rowsIn.filter((r) => where(r) && String(r[field] ?? "").startsWith(m.key)).length }));
 }
 
+/** ISO timestamp for the first day of the month, `n - 1` months ago. */
+export function monthsAgoIso(n = 12) {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth() - (n - 1), 1).toISOString();
+}
+
+const toActivity = (a: Row) => ({ id: a.id, kind: a.kind ?? "system", actor: a.actor ?? undefined, message: a.message ?? "", at: a.at ?? nowIso() });
+
+/** Newest activity first. Reads only `limit` documents instead of the whole log. */
 export async function recentActivity(limit: number, userId?: string) {
-  const rows = await all("activity");
-  return rows
-    .filter((a) => !userId || a.userId === userId)
-    .sort((a, b) => +new Date(b.at) - +new Date(a.at))
-    .slice(0, limit)
-    .map((a) => ({ id: a.id, kind: a.kind ?? "system", actor: a.actor ?? undefined, message: a.message ?? "", at: a.at ?? nowIso() }));
+  if (userId) {
+    // One member's own history is small; sorting it here avoids a composite index.
+    const mine = await rows(db().collection("activity").where("userId", "==", userId));
+    return mine.sort((a, b) => +new Date(b.at) - +new Date(a.at)).slice(0, limit).map(toActivity);
+  }
+  return (await rows(db().collection("activity").orderBy("at", "desc").limit(limit))).map(toActivity);
 }
 
 export async function maintenanceOn() {
-  const s = await db().collection("settings").doc("system").get();
-  return Boolean(s.data()?.flags?.maintenance);
+  return cached("settings:maintenance", 30_000, async () => {
+    const s = await db().collection("settings").doc("system").get();
+    return Boolean(s.data()?.flags?.maintenance);
+  });
 }
-
 
 export type Handler = (ctx: { payload: Payload; me: Actor; store: Firestore }) => Promise<unknown>;
