@@ -100,7 +100,7 @@ export function AppShell({ variant, user, unread = 0, badges, children }: { vari
       </a>
 
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-white lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-white print:hidden lg:flex">
         <div className="flex h-16 items-center border-b border-line px-5">
           <Logo href={base} sub={variant === "admin" ? "Admin console" : undefined} />
         </div>
@@ -125,8 +125,8 @@ export function AppShell({ variant, user, unread = 0, badges, children }: { vari
         </div>
       )}
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-white/95 px-4 backdrop-blur sm:px-6">
+      <div className="lg:pl-64 print:pl-0">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-white/95 px-4 backdrop-blur print:hidden sm:px-6">
           <button onClick={() => setDrawer(true)} className="-ml-1 rounded p-2 text-ink-600 hover:bg-ink-50 lg:hidden" aria-label="Open menu">
             <Menu className="h-5 w-5" aria-hidden />
           </button>
@@ -157,7 +157,7 @@ export function AppShell({ variant, user, unread = 0, badges, children }: { vari
             <Link href={variant === "admin" ? "/admin/users" : "/dashboard/donors"} className="rounded p-2 text-ink-600 hover:bg-ink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hemo-500 md:hidden" aria-label={variant === "admin" ? "Search users" : "Find donors"}>
               <Search className="h-5 w-5" aria-hidden />
             </Link>
-            <Link href="/dashboard/notifications" className="relative rounded p-2 text-ink-600 hover:bg-ink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hemo-500" aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}>
+            <Link href={variant === "admin" ? "/admin/inbox" : "/dashboard/notifications"} className="relative rounded p-2 text-ink-600 hover:bg-ink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hemo-500" aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}>
               <Bell className="h-5 w-5" aria-hidden />
               {unread > 0 && (
                 <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-hemo-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white" aria-hidden>
@@ -179,9 +179,15 @@ export function AppShell({ variant, user, unread = 0, badges, children }: { vari
                 </button>
               )}
               items={[
-                ...(variant === "user" ? [{ label: "My profile", icon: <UserRound className="h-4 w-4" aria-hidden />, onSelect: () => router.push("/dashboard/profile") }] : []),
-                { label: "Settings", icon: <Settings className="h-4 w-4" aria-hidden />, onSelect: () => router.push(`${base}/settings`) },
-                ...(variant === "admin" || user.role === "admin" ? [{ label: variant === "admin" ? "Switch to donor view" : "Open admin console", icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, onSelect: () => router.push(variant === "admin" ? "/dashboard" : "/admin") }] : []),
+                variant === "admin"
+                  ? { label: "My account", icon: <UserRound className="h-4 w-4" aria-hidden />, onSelect: () => router.push("/admin/account") }
+                  : { label: "My profile", icon: <UserRound className="h-4 w-4" aria-hidden />, onSelect: () => router.push("/dashboard/profile") },
+                variant === "admin"
+                  ? { label: "System settings", icon: <Settings className="h-4 w-4" aria-hidden />, onSelect: () => router.push("/admin/settings") }
+                  : { label: "Settings", icon: <Settings className="h-4 w-4" aria-hidden />, onSelect: () => router.push("/dashboard/settings") },
+                ...(user.role === "admin"
+                  ? [{ label: variant === "admin" ? "Open member view" : "Back to admin console", icon: <ArrowLeftRight className="h-4 w-4" aria-hidden />, onSelect: () => router.push(variant === "admin" ? "/dashboard" : "/admin") }]
+                  : []),
                 { label: "Log out", icon: <LogOut className="h-4 w-4" aria-hidden />, onSelect: logout, tone: "danger" },
               ]}
             >
@@ -193,13 +199,20 @@ export function AppShell({ variant, user, unread = 0, badges, children }: { vari
           </div>
         </header>
 
-        <main id="main" className={cn("mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8", variant === "user" && "pb-24 lg:pb-8")}>
+        {variant === "user" && user.role === "admin" && (
+          <div className="flex items-center justify-between gap-3 border-b border-info-100 bg-info-50 px-4 py-2 text-[13px] text-info-700 print:hidden sm:px-6">
+            <span>You&apos;re viewing the member dashboard with your admin account.</span>
+            <Link href="/admin" className="shrink-0 font-semibold underline-offset-2 hover:underline">Back to admin console</Link>
+          </div>
+        )}
+
+        <main id="main" className={cn("mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8 print:max-w-none print:p-0", variant === "user" && "pb-24 lg:pb-8")}>
           {children}
         </main>
       </div>
 
       {variant === "user" && (
-        <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
+        <nav aria-label="Quick navigation" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] print:hidden lg:hidden">
           <ul className="grid grid-cols-5">
             {userBottomNav.map((it) => {
               const Icon = it.icon;
