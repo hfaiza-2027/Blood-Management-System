@@ -72,3 +72,24 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Printed reports: plain white pages, no shadows, charts and tables kept whole. */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  [role="status"][aria-live],
+  [data-toast] {
+    display: none !important;
+  }
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+  }
+}

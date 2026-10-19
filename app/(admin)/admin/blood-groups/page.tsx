@@ -8,28 +8,27 @@ import { StockBadge } from "@/components/ui/StatusBadge";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { BLOOD_GROUPS, BLOOD_GROUP_NOTES, COMPATIBLE_DONORS, canDonateTo } from "@/lib/constants";
 import { dashboardService } from "@/services/dashboardService";
-import { inventoryService, stockLevel } from "@/services/inventoryService";
+import { stockLevel } from "@/services/inventoryService";
+import { resolveReportFilters } from "@/lib/reportRange";
 import { cn, formatNumber } from "@/lib/utils";
-import type { BloodInventory } from "@/types";
 
 export const metadata: Metadata = { title: "Blood groups" };
 
-interface Row { group: BloodGroup; donors: number; demand: number; stock?: BloodInventory }
+interface Row { group: BloodGroup; donors: number; demand: number; stock?: { available: number; required: number } }
 
 export default async function BloodGroupsPage() {
-  const [reports, inventory] = await Promise.all([dashboardService.reports(), inventoryService.list()]);
-  const rows: Row[] = BLOOD_GROUPS.map((g) => ({
-    group: g,
-    donors: reports.donorGroupDistribution.find((d) => d.group === g)?.value ?? 0,
-    demand: reports.groupDemand.find((d) => d.group === g)?.value ?? 0,
-    stock: inventory.find((i) => i.bloodGroup === g),
-  }));
+  // The same report engine as Reports, over the last 12 months, so both pages always agree.
+  const report = await dashboardService.reports(resolveReportFilters({ range: "12m" }).filters);
+  const rows: Row[] = BLOOD_GROUPS.map((g) => {
+    const r = report.groups.find((x) => x.group === g);
+    return { group: g, donors: r?.activeDonors ?? 0, demand: r?.requests ?? 0, stock: r ? { available: r.availableUnits, required: report.inventory.find((i) => i.group === g)?.required ?? 0 } : undefined };
+  });
   const totalDonors = rows.reduce((a, r) => a + r.donors, 0);
 
   const columns: Column<Row>[] = [
     { key: "group", header: "Group", hideOnCard: true, cell: (r) => <BloodGroupBadge group={r.group} size="sm" /> },
-    { key: "donors", header: "Active donors", align: "right", cell: (r) => <span className="tabular-nums">{formatNumber(r.donors)} <span className="text-ink-400">({Math.round((r.donors / totalDonors) * 100)}%)</span></span> },
-    { key: "demand", header: "Requests this year", align: "right", cell: (r) => <span className="tabular-nums">{r.demand}</span> },
+    { key: "donors", header: "Active donors", align: "right", cell: (r) => <span className="tabular-nums">{formatNumber(r.donors)} <span className="text-ink-400">({totalDonors ? Math.round((r.donors / totalDonors) * 100) : 0}%)</span></span> },
+    { key: "demand", header: "Requests, last 12 months", align: "right", cell: (r) => <span className="tabular-nums">{r.demand}</span> },
     { key: "ratio", header: "Donors per request", align: "right", cell: (r) => <span className={cn("tabular-nums font-semibold", r.donors / Math.max(1, r.demand) < 3 ? "text-hemo-700" : "text-ink-900")}>{(r.donors / Math.max(1, r.demand)).toFixed(1)}</span> },
     { key: "stock", header: "Stock", cell: (r) => (r.stock ? <span className="inline-flex items-center gap-2"><span className="tabular-nums">{r.stock.available} units</span><StockBadge level={stockLevel(r.stock)} /></span> : "No data") },
     { key: "gives", header: "Can give to", cell: (r) => <span className="text-ink-600">{canDonateTo(r.group).join(", ")}</span> },

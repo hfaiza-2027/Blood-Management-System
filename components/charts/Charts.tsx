@@ -41,19 +41,28 @@ function niceMax(v: number) {
 const values = (data: SeriesPoint[]) => data.map((d) => (Number.isFinite(d.value) ? d.value : 0));
 
 /** Shown instead of a chart when there is nothing to plot yet. */
-function NoData({ caption, height = 160 }: { caption: string; height?: number }) {
+function NoData({ caption, height = 160, text = "This chart fills in as activity is recorded." }: { caption: string; height?: number; text?: string }) {
   return (
     <figure className="flex flex-col items-center justify-center rounded-md border border-dashed border-line bg-paper/60 px-4 text-center" style={{ minHeight: height }}>
       <p className="text-sm font-medium text-ink-700">No data yet</p>
-      <p className="mt-1 text-[13px] text-ink-500">This chart fills in as activity is recorded.</p>
+      <p className="mt-1 text-[13px] text-ink-500">{text}</p>
       <figcaption className="sr-only">{caption}: no data yet</figcaption>
     </figure>
   );
 }
 
+/** With many points, show every n-th label so they never overlap. */
+function labelStep(count: number) {
+  if (count <= 12) return 1;
+  if (count <= 24) return 2;
+  if (count <= 45) return 4;
+  return Math.ceil(count / 10);
+}
+
 /** Vertical bars built with CSS so labels stay legible at every width. */
-export function BarChart({ data, caption, height = 200, highlightLast = false, unit = "" }: { data: SeriesPoint[]; caption: string; height?: number; highlightLast?: boolean; unit?: string }) {
-  if (!data.length) return <NoData caption={caption} height={height} />;
+export function BarChart({ data, caption, height = 200, highlightLast = false, unit = "", emptyText }: { data: SeriesPoint[]; caption: string; height?: number; highlightLast?: boolean; unit?: string; emptyText?: string }) {
+  if (!data.length || values(data).every((v) => v === 0)) return <NoData caption={caption} height={height} text={emptyText} />;
+  const step = labelStep(data.length);
   const max = niceMax(Math.max(...values(data)));
   const ticks = [max, max / 2, 0];
   return (
@@ -83,7 +92,7 @@ export function BarChart({ data, caption, height = 200, highlightLast = false, u
                     </span>
                     <div className={cn("w-full rounded-t-[3px] transition-colors", hi ? "bg-hemo-600" : "bg-ink-200 group-hover:bg-ink-300")} style={{ height: h }} />
                   </div>
-                  <span className="mt-1.5 h-[18px] truncate text-[11px] text-ink-500">{d.label}</span>
+                  <span className="mt-1.5 h-[18px] truncate text-[11px] text-ink-500">{i % step === 0 || i === data.length - 1 ? d.label : ""}</span>
                 </div>
               );
             })}
@@ -95,10 +104,14 @@ export function BarChart({ data, caption, height = 200, highlightLast = false, u
   );
 }
 
-/** Line/area chart. The SVG stretches; labels are HTML so they don't distort. */
-export function LineChart({ data, caption, height = 200, unit = "", min }: { data: SeriesPoint[]; caption: string; height?: number; unit?: string; min?: number }) {
-  if (data.length < 2) return <NoData caption={caption} height={height} />;
-  const vals = values(data);
+/** A point that may have no value (e.g. a rate for a month with no requests). */
+export interface NullablePoint { label: string; value: number | null }
+
+/** Line/area chart. The SVG stretches; labels are HTML so they don't distort. Gaps are left where a value is null. */
+export function LineChart({ data, caption, height = 200, unit = "", min, emptyText }: { data: NullablePoint[]; caption: string; height?: number; unit?: string; min?: number; emptyText?: string }) {
+  const present = data.filter((d): d is SeriesPoint => d.value !== null && Number.isFinite(d.value));
+  if (data.length < 2 || present.length < 1) return <NoData caption={caption} height={height} text={emptyText} />;
+  const vals = present.map((d) => d.value);
   const hi = Math.max(...vals);
   // Only honour a raised floor when every point sits above it.
   const lo = min !== undefined && min < Math.min(...vals) ? min : 0;
@@ -106,10 +119,18 @@ export function LineChart({ data, caption, height = 200, unit = "", min }: { dat
   const W = 100;
   const H = 100;
   const x = (i: number) => (i / (data.length - 1)) * W;
-  const y = (v: number) => H - (((Number.isFinite(v) ? v : 0) - lo) / (max - lo)) * H;
-  const line = data.map((d, i) => `${i ? "L" : "M"}${x(i)},${y(d.value)}`).join(" ");
-  const area = `${line} L${W},${H} L0,${H} Z`;
-  const last = data[data.length - 1];
+  const y = (v: number) => H - ((v - lo) / (max - lo)) * H;
+  // Split into runs of consecutive values so missing buckets show as gaps.
+  const runs: { i: number; v: number }[][] = [];
+  data.forEach((d, i) => {
+    if (d.value === null || !Number.isFinite(d.value)) return runs.push([]);
+    if (!runs.length) runs.push([]);
+    runs[runs.length - 1].push({ i, v: d.value });
+  });
+  const segments = runs.filter((r) => r.length);
+  const step = labelStep(data.length);
+  const lastIdx = [...data.keys()].reverse().find((i) => data[i].value !== null);
+  const last = lastIdx !== undefined ? { i: lastIdx, v: data[lastIdx].value as number } : null;
 
   return (
     <figure>
@@ -127,22 +148,99 @@ export function LineChart({ data, caption, height = 200, unit = "", min }: { dat
               ))}
             </div>
             <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
-              <path d={area} className="fill-hemo-600/[0.07]" />
-              <path d={line} className="fill-none stroke-hemo-600" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+              {segments.map((run, k) => {
+                const line = run.map((p, j) => `${j ? "L" : "M"}${x(p.i)},${y(p.v)}`).join(" ");
+                const area = `${line} L${x(run[run.length - 1].i)},${H} L${x(run[0].i)},${H} Z`;
+                return (
+                  <g key={k}>
+                    {run.length > 1 && <path d={area} className="fill-hemo-600/[0.07]" />}
+                    <path d={line} className="fill-none stroke-hemo-600" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+                  </g>
+                );
+              })}
             </svg>
-            <span
-              className="absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-hemo-600 shadow"
-              style={{ left: "100%", top: `${y(last.value)}%` }}
-            />
+            {segments.flat().map((p) => (
+              <span
+                key={p.i}
+                title={`${data[p.i].label}: ${p.v}${unit}`}
+                className={cn("absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-hemo-600", last && p.i === last.i ? "h-2.5 w-2.5 shadow" : "h-1.5 w-1.5")}
+                style={{ left: `${x(p.i)}%`, top: `${y(p.v)}%` }}
+              />
+            ))}
           </div>
           <div className="mt-1.5 flex justify-between text-[11px] text-ink-500">
             {data.map((d, i) => (
-              <span key={d.label} className={cn(i % 2 === 1 && "hidden sm:inline")}>{d.label}</span>
+              <span key={`${d.label}-${i}`} className={cn(i % step !== 0 && i !== data.length - 1 && "invisible", step === 1 && i % 2 === 1 && "hidden sm:inline")}>{d.label}</span>
             ))}
           </div>
         </div>
       </div>
-      <SrTable caption={caption} data={data} unit={unit} />
+      <table className="sr-only">
+        <caption>{caption}</caption>
+        <tbody>
+          {data.map((d, i) => (
+            <tr key={`${d.label}-${i}`}>
+              <th scope="row">{d.label}</th>
+              <td>{d.value === null ? "No data" : `${d.value}${unit}`}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </figure>
+  );
+}
+
+/** Two series side by side per bucket, e.g. requests vs donations. */
+export function DualBarChart({ data, series, caption, height = 220, emptyText }: { data: { label: string; a: number; b: number }[]; series: [string, string]; caption: string; height?: number; emptyText?: string }) {
+  if (!data.length || data.every((d) => !d.a && !d.b)) return <NoData caption={caption} height={height} text={emptyText} />;
+  const max = niceMax(Math.max(...data.map((d) => Math.max(d.a || 0, d.b || 0))));
+  const ticks = [max, max / 2, 0];
+  const step = labelStep(data.length);
+  return (
+    <figure>
+      <div className="mb-3 flex flex-wrap gap-4 text-[12px] text-ink-600" aria-hidden>
+        <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-hemo-600" />{series[0]}</span>
+        <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-ink-700" />{series[1]}</span>
+      </div>
+      <div className="flex gap-2" aria-hidden>
+        <div className="flex flex-col justify-between pb-6 text-right text-[11px] tabular-nums text-ink-400" style={{ height }}>
+          {ticks.map((t) => (
+            <span key={t}>{formatNumber(t)}</span>
+          ))}
+        </div>
+        <div className="relative flex-1">
+          <div className="absolute inset-x-0 top-0 flex flex-col justify-between" style={{ height: height - 24 }}>
+            {ticks.map((t) => (
+              <div key={t} className="border-t border-dashed border-line" />
+            ))}
+          </div>
+          <div className="relative flex items-end gap-[2%]" style={{ height }}>
+            {data.map((d, i) => (
+              <div key={`${d.label}-${i}`} className="group flex min-w-0 flex-1 flex-col items-center justify-end">
+                <div className="relative flex w-full max-w-[44px] items-end justify-center gap-[2px]">
+                  <span className="pointer-events-none absolute -top-6 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded bg-ink-900 px-1.5 py-0.5 text-[11px] font-medium text-white group-hover:block">
+                    {formatNumber(d.a)} / {formatNumber(d.b)}
+                  </span>
+                  <div className="w-1/2 rounded-t-[2px] bg-hemo-600" style={{ height: ((height - 24) * (d.a || 0)) / max }} />
+                  <div className="w-1/2 rounded-t-[2px] bg-ink-700" style={{ height: ((height - 24) * (d.b || 0)) / max }} />
+                </div>
+                <span className="mt-1.5 h-[18px] truncate text-[11px] text-ink-500">{i % step === 0 || i === data.length - 1 ? d.label : ""}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <table className="sr-only">
+        <caption>{caption}</caption>
+        <thead>
+          <tr><th scope="col">Period</th><th scope="col">{series[0]}</th><th scope="col">{series[1]}</th></tr>
+        </thead>
+        <tbody>
+          {data.map((d, i) => (
+            <tr key={`${d.label}-${i}`}><th scope="row">{d.label}</th><td>{d.a}</td><td>{d.b}</td></tr>
+          ))}
+        </tbody>
+      </table>
     </figure>
   );
 }
