@@ -325,6 +325,21 @@ export const clientHandlers: Record<string, Handler> = {
     return { ok: true, updated: unread.docs.length };
   },
 
+  /**
+   * Cheap counters polled by the browser to detect new activity. Members get
+   * their unread notifications; admins also get new contact messages and open
+   * emergencies. Each value is a server-side count, so no documents are read.
+   */
+  "live:counts": async ({ me, store }) => {
+    const unread = await count(store.collection("notifications").where("userId", "==", me.uid).where("read", "==", false));
+    if (me.role !== "admin") return { unread };
+    const [newMessages, emergencies] = await Promise.all([
+      count(store.collection("contactMessages").where("status", "==", "new")),
+      count(store.collection("bloodRequests").where("urgency", "==", "emergency").where("status", "in", OPEN)),
+    ]);
+    return { unread, newMessages, emergencies };
+  },
+
   "dashboard:userOverview": async ({ me, store }) => {
     const [ds, rs, activity] = await Promise.all([
       rows(store.collection("donations").where("donorId", "==", me.uid)),

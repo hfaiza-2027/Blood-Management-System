@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
+import { LiveUpdates } from "@/components/system/LiveUpdates";
 import { getSessionUserOrNull } from "@/lib/session";
 import { notificationService } from "@/services/notificationService";
 import { safe } from "@/services/client";
@@ -16,6 +17,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const unread = await safe(notificationService.unreadCount(), 0);
   return (
     <AppShell variant="user" unread={unread} badges={{ "/dashboard/notifications": unread }} user={{ name: user.fullName, email: user.email, bloodGroup: user.bloodGroup, role: user.role }}>
+      <LiveUpdates initial={{ unread }} />
       {children}
     </AppShell>
   );
