@@ -14,6 +14,7 @@ import { BLOOD_GROUPS, CITY_NAMES } from "@/lib/constants";
 import { hasErrors, rules, validate, type Errors } from "@/lib/validations";
 import { formatNumber, timeAgo } from "@/lib/utils";
 import type { BroadcastRecord as Sent } from "@/services/notificationService";
+import { useServerState } from "@/lib/hooks/useServerState";
 
 const AUDIENCES = [
   { value: "all", label: "Everyone" },
@@ -31,7 +32,7 @@ export function BroadcastPanel({ initialHistory }: { initialHistory: Sent[] }) {
   const [errors, setErrors] = useState<Errors<Values>>({});
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [history, setHistory] = useState<Sent[]>(initialHistory);
+  const [history, setHistory] = useServerState<Sent[]>(initialHistory);
 
   const set = (k: keyof Values) => (e: { target: { value: string } }) => setValues((s) => ({ ...s, [k]: e.target.value }));
 

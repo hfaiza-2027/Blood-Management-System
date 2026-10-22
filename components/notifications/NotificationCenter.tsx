@@ -11,6 +11,7 @@ import { Segmented } from "@/components/ui/Tabs";
 import { EmptyState } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import { cn, timeAgo } from "@/lib/utils";
+import { useServerState } from "@/lib/hooks/useServerState";
 
 const ICONS: Record<NotificationKind, { icon: typeof Bell; className: string }> = {
   emergency_nearby: { icon: Siren, className: "bg-hemo-100 text-hemo-700" },
@@ -27,7 +28,7 @@ type Filter = "all" | "unread" | "emergency";
 export function NotificationCenter({ initial, emptyText = "Emergency alerts near you, request updates and appointment reminders will appear here." }: { initial: Notification[]; emptyText?: string }) {
   const toast = useToast();
   const router = useRouter();
-  const [items, setItems] = useState(initial);
+  const [items, setItems] = useServerState(initial);
   const [filter, setFilter] = useState<Filter>("all");
   const [busy, setBusy] = useState(false);
   const unread = items.filter((n) => !n.read).length;

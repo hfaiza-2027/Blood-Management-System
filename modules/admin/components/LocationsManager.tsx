@@ -11,10 +11,11 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { formatNumber } from "@/lib/utils";
 import { hospitalService } from "@/services/hospitalService";
+import { useServerState } from "@/lib/hooks/useServerState";
 
 export function LocationsManager({ initial }: { initial: CityLocation[] }) {
   const toast = useToast();
-  const [rows, setRows] = useState(initial);
+  const [rows, setRows] = useServerState(initial);
   const [target, setTarget] = useState<CityLocation | "new" | null>(null);
   const [name, setName] = useState("");
   const [err, setErr] = useState<string>();

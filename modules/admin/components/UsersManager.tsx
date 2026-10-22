@@ -22,6 +22,7 @@ import { useToast } from "@/components/ui/Toast";
 import { BLOOD_GROUPS, CITIES, CITY_NAMES } from "@/lib/constants";
 import { formatDate, formatPlace } from "@/lib/utils";
 import { hasErrors, rules, validate, type Errors } from "@/lib/validations";
+import { useServerState } from "@/lib/hooks/useServerState";
 
 const ROLE_LABEL: Record<UserRole, string> = { user: "Member", donor: "Donor", admin: "Admin" };
 
@@ -29,7 +30,7 @@ type Edit = { fullName: string; email: string; phone: string; bloodGroup: string
 
 export function UsersManager({ initial, initialQuery }: { initial: User[]; initialQuery: string }) {
   const toast = useToast();
-  const [users, setUsers] = useState(initial);
+  const [users, setUsers] = useServerState(initial);
   const [role, setRole] = useState<UserRole | "any">("any");
   const [status, setStatus] = useState<AccountStatus | "any">("any");
   const [viewing, setViewing] = useState<User | null>(null);
