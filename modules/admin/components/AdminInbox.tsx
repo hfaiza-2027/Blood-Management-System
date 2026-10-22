@@ -22,25 +22,26 @@ const TOPIC: Record<string, string> = {
 };
 
 type Tab = "messages" | "notifications";
-type Filter = "open" | "new" | "resolved" | "all";
+/** Pending = still needs action (unread or read). Unread messages are highlighted inside it. */
+type Filter = "pending" | "resolved" | "all";
 
 export function AdminInbox({ messages, notifications, initialTab }: { messages: ContactMessage[]; notifications: Notification[]; initialTab: Tab }) {
   const toast = useToast();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [items, setItems] = useServerState(messages);
-  const [filter, setFilter] = useState<Filter>("open");
+  const [filter, setFilter] = useState<Filter>("pending");
   const [openId, setOpenId] = useState<string | null>(null);
 
   const counts = useMemo(
     () => ({
-      new: items.filter((m) => m.status === "new").length,
-      open: items.filter((m) => m.status !== "resolved").length,
+      unread: items.filter((m) => m.status === "new").length,
+      pending: items.filter((m) => m.status !== "resolved").length,
       resolved: items.filter((m) => m.status === "resolved").length,
     }),
     [items],
   );
-  const rows = items.filter((m) => filter === "all" || (filter === "open" ? m.status !== "resolved" : m.status === filter));
+  const rows = items.filter((m) => filter === "all" || (filter === "pending" ? m.status !== "resolved" : m.status === "resolved"));
   const unreadNotifications = notifications.filter((n) => !n.read).length;
 
   async function setStatus(m: ContactMessage, status: ContactMessage["status"]) {
@@ -68,7 +69,7 @@ export function AdminInbox({ messages, notifications, initialTab }: { messages: 
         value={tab}
         onChange={setTab}
         items={[
-          { value: "messages", label: "Contact messages", count: counts.new },
+          { value: "messages", label: "Contact messages", count: counts.unread },
           { value: "notifications", label: "My notifications", count: unreadNotifications },
         ]}
       />
@@ -77,23 +78,27 @@ export function AdminInbox({ messages, notifications, initialTab }: { messages: 
         <NotificationCenter initial={notifications} emptyText="System alerts and updates sent to your account appear here." />
       ) : (
         <div className="rounded-card border border-line bg-white shadow-card">
-          <div className="border-b border-line p-4">
+          <div className="flex flex-col gap-2 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between">
             <Segmented
               label="Filter messages"
               value={filter}
               onChange={setFilter}
               items={[
-                { value: "open", label: "Open", count: counts.open },
-                { value: "new", label: "New", count: counts.new },
+                { value: "pending", label: "Pending", count: counts.pending },
                 { value: "resolved", label: "Resolved", count: counts.resolved },
                 { value: "all", label: "All", count: items.length },
               ]}
             />
+            {counts.unread > 0 && (
+              <p className="text-[13px] text-ink-500">
+                <span className="font-semibold text-hemo-700">{counts.unread} unread</span> · opening a message marks it as read
+              </p>
+            )}
           </div>
           {rows.length === 0 ? (
             <EmptyState
               icon={<Inbox className="h-6 w-6" aria-hidden />}
-              title={filter === "resolved" ? "Nothing resolved yet" : "No messages to handle"}
+              title={filter === "resolved" ? "Nothing resolved yet" : filter === "pending" ? "You're all caught up" : "No messages yet"}
               description="Messages sent from the public contact page arrive here."
               className="border-0 shadow-none"
             />
