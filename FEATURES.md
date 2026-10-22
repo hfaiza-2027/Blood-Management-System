@@ -49,7 +49,8 @@ Next.js already sends each page's code separately, so a member never downloads a
 - **Hospitals & blood banks:** add, edit, verify and remove facilities (removal is blocked while a facility has open requests).
 - **Locations:** add cities and areas, remove areas.
 - **Reports:** any period (presets or custom up to two years) filtered by city, blood group, urgency and facility; comparison with the previous period; fulfilment, on-time emergencies, response and fulfilment times; demand vs supply per group; cities; top facilities; appointment outcomes; donor verification; stock in/out. Full CSV export and Print / PDF.
-- **Inbox:** messages from the public contact form (new / open / resolved) and the admin's own notifications. The bell and sidebar badge show what's waiting.
+- **Inbox:** messages from the public contact form (Pending / Resolved / All, with unread ones highlighted) and the admin's own notifications. The bell and sidebar badge show what's waiting.
+- **Live updates:** badges and open lists refresh on their own within about 15 seconds of new messages, notifications or emergencies (and immediately when the tab regains focus).
 - **Broadcasts:** send to everyone, all donors, one blood group or one city (max 280 characters), with sent history.
 - **My account:** admins edit their own name and phone, change password and sign out everywhere without leaving the console.
 - **Activity log:** every important action, searchable and filterable.

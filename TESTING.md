@@ -191,7 +191,7 @@ In Chrome press **F12**, then **Ctrl+Shift+M**, and pick iPhone SE (375px), then
 | M2 | As admin, open the account menu → **Open member view** | The member dashboard opens with a blue banner; **Back to admin console** returns you |
 | M3 | As admin, click the bell in the top bar | `/admin/inbox` opens (not the member notifications page) |
 | M4 | While signed in, open `/` and `/auth/login` | The navbar shows **Admin console** / **My dashboard**; the login page redirects you home |
-| M5 | Send a message from `/contact` (signed out) | It appears in Admin → Inbox as **New**; the sidebar badge counts it; mark it resolved |
+| M5 | Keep Admin → Inbox open. In another browser, send a message from `/contact` (signed out) | Within about 15 seconds, without reloading, the bell and sidebar badge count it and it appears under **Pending** with a **New** badge; open it (it becomes read), then **Mark resolved** |
 | M6 | Admin → Blood inventory: add 20 units of A+, then remove 5 | Both appear under **Recent stock movements** with the running balance |
 | M7 | Admin → Reports: switch between **Last 7 days**, **Last 12 months** and a **Custom range** | The URL updates, charts switch between daily / weekly / monthly, and each summary card compares with the previous period |
 | M8 | Reports: choose a city, then a facility | Figures narrow; the facility list only shows that city's facilities; **Reset** clears everything |
