@@ -261,3 +261,23 @@ test("admin status changes only accept known values", async () => {
   await rejects(call("admin", "donors:setVerification", { id: "ali", verification: "maybe" }), /Unknown verification/);
   await rejects(call("admin", "donors:setStatus", { id: "ali", status: "gone" }), /Unknown donor status/);
 });
+
+/* ---------- live updates ---------- */
+
+test("live counters report new activity to members and admins", async () => {
+  await call("admin", "system:seed");
+  assert.deepEqual(await call("ali", "live:counts"), { unread: 0 }, "members only see their own unread count");
+  const before = await call("admin", "live:counts");
+  assert.deepEqual(before, { unread: 0, newMessages: 0, emergencies: 0 });
+
+  await call(null, "contact:submit", { input: { name: "Nadia Perveen", email: "nadia@example.com", topic: "partner", message: "We would like to partner with BloodBridge." } });
+  await request("ahmed");
+  const after = await call("admin", "live:counts");
+  assert.equal(after.newMessages, 1, "a new contact message is counted at once");
+  assert.equal(after.emergencies, 1);
+
+  const [m] = await call("admin", "contactMessages:list");
+  await call("admin", "contactMessages:setStatus", { id: m.id, status: "read" });
+  assert.equal((await call("admin", "live:counts")).newMessages, 0);
+  await rejects(call(null, "live:counts"), "AUTH_REQUIRED");
+});

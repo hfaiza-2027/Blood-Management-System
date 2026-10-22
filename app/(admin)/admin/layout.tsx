@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
+import { LiveUpdates } from "@/components/system/LiveUpdates";
 import { getSessionUserOrNull } from "@/lib/session";
 import { notificationService } from "@/services/notificationService";
 import { bloodRequestService } from "@/services/bloodRequestService";
@@ -28,6 +29,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       badges={{ "/admin/emergency": emergencies, "/admin/inbox": unread + newMessages }}
       user={{ name: user.fullName, email: user.email, role: user.role }}
     >
+      <LiveUpdates initial={{ unread, newMessages, emergencies }} />
       {children}
     </AppShell>
   );
