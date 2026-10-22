@@ -13,10 +13,11 @@ import { EmptyState } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import { bloodRequestService } from "@/services/bloodRequestService";
 import { cn, timeRemaining } from "@/lib/utils";
+import { useServerState } from "@/lib/hooks/useServerState";
 
 export function EmergencyBoard({ initial }: { initial: BloodRequest[] }) {
   const toast = useToast();
-  const [rows, setRows] = useState(initial);
+  const [rows, setRows] = useServerState(initial);
   const [assigning, setAssigning] = useState<BloodRequest | null>(null);
 
   async function fulfil(r: BloodRequest) {

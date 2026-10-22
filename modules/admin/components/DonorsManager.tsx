@@ -21,10 +21,11 @@ import { EmptyState } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import { BLOOD_GROUPS } from "@/lib/constants";
 import { daysBetween, formatDate, now, formatPlace } from "@/lib/utils";
+import { useServerState } from "@/lib/hooks/useServerState";
 
 export function DonorsManager({ initial }: { initial: Donor[] }) {
   const toast = useToast();
-  const [donors, setDonors] = useState(initial);
+  const [donors, setDonors] = useServerState(initial);
   const [group, setGroup] = useState<BloodGroup | "any">("any");
   const [verification, setVerification] = useState<VerificationStatus | "any">("any");
   const [availability, setAvailability] = useState<DonorAvailability | "any">("any");

@@ -15,14 +15,15 @@ import { DataTable, type Column } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import { cn, formatDateTime, timeAgo } from "@/lib/utils";
+import { useServerState } from "@/lib/hooks/useServerState";
 
 const BAR: Record<string, string> = { normal: "bg-ok-600", low: "bg-warn-600", critical: "bg-hemo-600" };
 const REASONS = ["New donations received", "Issued to hospital", "Transferred from partner bank", "Expired units discarded", "Stock count correction"];
 
 export function InventoryManager({ initial, initialMovements = [] }: { initial: BloodInventory[]; initialMovements?: InventoryMovement[] }) {
   const toast = useToast();
-  const [rows, setRows] = useState(initial);
-  const [movements, setMovements] = useState(initialMovements);
+  const [rows, setRows] = useServerState(initial);
+  const [movements, setMovements] = useServerState(initialMovements);
   const [target, setTarget] = useState<BloodInventory | null>(null);
   const [mode, setMode] = useState<"add" | "remove">("add");
   const [amount, setAmount] = useState("");

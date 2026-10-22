@@ -17,10 +17,11 @@ import { EmptyState } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import { BLOOD_GROUPS, DONATION_STATUS_META } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
+import { useServerState } from "@/lib/hooks/useServerState";
 
 export function DonationsManager({ initial }: { initial: Donation[] }) {
   const toast = useToast();
-  const [rows, setRows] = useState(initial);
+  const [rows, setRows] = useServerState(initial);
   const [status, setStatus] = useState<DonationStatus | "any">("any");
   const [group, setGroup] = useState<BloodGroup | "any">("any");
 

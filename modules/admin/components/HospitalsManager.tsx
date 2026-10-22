@@ -20,6 +20,7 @@ import { useToast } from "@/components/ui/Toast";
 import { BLOOD_GROUPS, CITIES, CITY_NAMES } from "@/lib/constants";
 import { hasErrors, rules, validate, type Errors } from "@/lib/validations";
 import { cn } from "@/lib/utils";
+import { useServerState } from "@/lib/hooks/useServerState";
 
 const TYPE_LABEL: Record<FacilityType, string> = { hospital: "Hospital", blood_bank: "Blood bank", donation_center: "Donation centre" };
 
@@ -28,7 +29,7 @@ const EMPTY: FormValues = { name: "", type: "hospital", address: "", city: "Laho
 
 export function HospitalsManager({ initial }: { initial: Hospital[] }) {
   const toast = useToast();
-  const [rows, setRows] = useState(initial);
+  const [rows, setRows] = useServerState(initial);
   const [tab, setTab] = useState<FacilityType | "all">("all");
   const [city, setCity] = useState("any");
   const [editing, setEditing] = useState<Hospital | "new" | null>(null);

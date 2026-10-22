@@ -22,6 +22,7 @@ import { RequestTimeline } from "@/components/blood/RequestTimeline";
 import { useToast } from "@/components/ui/Toast";
 import { REQUEST_STATUS_META } from "@/lib/constants";
 import { formatDateTime, now, formatPlace } from "@/lib/utils";
+import { useServerState } from "@/lib/hooks/useServerState";
 
 type Tab = "review" | "active" | "closed" | "all";
 const ACTIVE: RequestStatus[] = ["approved", "matching", "donor_found", "partially_fulfilled"];
@@ -30,7 +31,7 @@ const ALL_STATUSES = Object.keys(REQUEST_STATUS_META) as RequestStatus[];
 
 export function RequestsManager({ initial }: { initial: BloodRequest[] }) {
   const toast = useToast();
-  const [rows, setRows] = useState(initial);
+  const [rows, setRows] = useServerState(initial);
   const [tab, setTab] = useState<Tab>("review");
   const [urgency, setUrgency] = useState<Urgency | "any">("any");
   const [viewing, setViewing] = useState<BloodRequest | null>(null);

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/States";
 import { useToast } from "@/components/ui/Toast";
 import { cn, formatDateTime, timeAgo } from "@/lib/utils";
+import { useServerState } from "@/lib/hooks/useServerState";
 
 const TOPIC: Record<string, string> = {
   general: "General question",
@@ -27,7 +28,7 @@ export function AdminInbox({ messages, notifications, initialTab }: { messages: 
   const toast = useToast();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
-  const [items, setItems] = useState(messages);
+  const [items, setItems] = useServerState(messages);
   const [filter, setFilter] = useState<Filter>("open");
   const [openId, setOpenId] = useState<string | null>(null);
 
