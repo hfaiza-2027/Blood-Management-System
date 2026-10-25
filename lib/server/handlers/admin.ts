@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* Admin-only actions. The executor checks the admin role before any of these run. */
 import { FieldValue } from "firebase-admin/firestore";
-import { adminAuth } from "@/lib/firebase/admin";
+import { adminAuth, forgetSessions } from "@/lib/firebase/admin";
 import { STARTER_HOSPITALS, STOCK_TARGETS } from "@/data/starter";
 import { BLOOD_GROUPS, CITIES } from "@/lib/constants";
 import { checkBroadcast, checkFacility, checkInventoryDelta, checkReportFilters } from "../validate";
@@ -27,6 +27,7 @@ export const adminHandlers: Record<string, Handler> = {
     if (!ACCOUNT_STATUSES.includes(String(payload.status))) throw new HttpError("Unknown account status.");
     await store.collection("users").doc(payload.id).set({ status: payload.status }, { merge: true });
     if (adminAuth) await adminAuth.updateUser(payload.id, { disabled: payload.status === "suspended" || payload.status === "inactive" }).catch(() => undefined);
+    forgetSessions(payload.id);
     await log("user", me.name, `set account ${payload.id} to ${payload.status}`);
     return { id: payload.id, status: payload.status };
   },
@@ -43,6 +44,7 @@ export const adminHandlers: Record<string, Handler> = {
     await store.collection("users").doc(payload.id).delete();
     await store.collection("donors").doc(payload.id).delete().catch(() => undefined);
     if (adminAuth) await adminAuth.deleteUser(payload.id).catch(() => undefined);
+    forgetSessions(payload.id);
     invalidate("public:");
     await log("user", me.name, `deleted account ${payload.id}`);
     return { id: payload.id };

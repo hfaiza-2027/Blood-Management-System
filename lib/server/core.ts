@@ -1,4 +1,5 @@
 /* Shared server-only helpers for the admin and client data handlers. */
+import { cache as perRequest } from "react";
 import { Timestamp, type Firestore, type Query } from "firebase-admin/firestore";
 import { adminDb, getSessionUser } from "@/lib/firebase/admin";
 import { STOCK_TARGETS } from "@/data/starter";
@@ -95,10 +96,21 @@ export function invalidate(...prefixes: string[]) {
 
 /* ---------- auth ---------- */
 
-export async function getActor(): Promise<Actor | null> {
+/**
+ * The signed-in person's session and profile, loaded once per page render and
+ * shared by the layout, the badges and every data call on that page.
+ * Outside a page render (API routes, tests) React's cache simply calls through.
+ */
+const sessionProfile = perRequest(async () => {
   const decoded = await getSessionUser();
   if (!decoded) return null;
-  const profile = await one("users", decoded.uid);
+  return { decoded, profile: await one("users", decoded.uid) };
+});
+
+export async function getActor(): Promise<Actor | null> {
+  const s = await sessionProfile();
+  if (!s) return null;
+  const { decoded, profile } = s;
   return {
     uid: decoded.uid,
     role: (decoded as any).role === "admin" || profile?.role === "admin" ? "admin" : profile?.role ?? "user",
@@ -127,9 +139,8 @@ export function normaliseUser(u: Row): Row {
 /** Used by Server Component layouts/pages via the registry in services/client.ts. */
 export async function currentSessionUser() {
   if (!adminDb) return null;
-  const decoded = await getSessionUser();
-  if (!decoded) return null;
-  const profile = await one("users", decoded.uid);
+  const s = await sessionProfile();
+  const profile = s?.profile;
   if (!profile) return null;
   return serial(normaliseUser(profile));
 }

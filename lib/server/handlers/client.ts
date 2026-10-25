@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* Actions for signed-in members. Some also accept admins (e.g. cancelling any request). */
 import { FieldValue } from "firebase-admin/firestore";
-import { adminAuth } from "@/lib/firebase/admin";
+import { adminAuth, forgetSessions } from "@/lib/firebase/admin";
 import { canReceiveFrom } from "@/lib/constants";
 import { coarsen, distanceKm } from "@/lib/geo";
 import { formatDate, formatTime12, maskPhone } from "@/lib/utils";
@@ -56,6 +56,7 @@ export const clientHandlers: Record<string, Handler> = {
 
   "users:revokeSessions": async ({ me }) => {
     if (adminAuth) await adminAuth.revokeRefreshTokens(me.uid);
+    forgetSessions(me.uid);
     await log("profile", me.name, "signed out of all devices", me.uid);
     return { ok: true };
   },
