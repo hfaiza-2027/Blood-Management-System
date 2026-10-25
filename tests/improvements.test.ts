@@ -281,3 +281,34 @@ test("live counters report new activity to members and admins", async () => {
   assert.equal((await call("admin", "live:counts")).newMessages, 0);
   await rejects(call(null, "live:counts"), "AUTH_REQUIRED");
 });
+
+/* ---------- sessions ---------- */
+
+test("a session is verified once and reused across calls", async () => {
+  const { authLog } = await import("./helpers");
+  await call("ali", "notifications:unreadCount");
+  const after = authLog.verifyCalls;
+  await call("ali", "notifications:list");
+  await call("ali", "live:counts");
+  await call("ali", "dashboard:userOverview");
+  assert.equal(authLog.verifyCalls, after, "no further Firebase Auth checks for the same cookie");
+});
+
+test("a temporary Firebase hiccup is retried instead of signing the person out", async () => {
+  const { authLog } = await import("./helpers");
+  authLog.failNext = 1;
+  assert.deepEqual(await call("ali", "live:counts"), { unread: 0 }, "one failure is retried");
+  const { forgetSessions } = await import("@/lib/firebase/admin");
+  forgetSessions();
+  authLog.failNext = 2;
+  await rejects(call("ali", "live:counts"), /socket hang up/);
+});
+
+test("signing out everywhere and suspension take effect at once despite the session cache", async () => {
+  await call("ali", "notifications:unreadCount");
+  await call("ali", "users:revokeSessions");
+  await rejects(call("ali", "notifications:list"), "AUTH_REQUIRED");
+  await call("hira", "notifications:unreadCount");
+  await call("admin", "users:setStatus", { id: "hira", status: "suspended" });
+  await rejects(call("hira", "notifications:list"), "FORBIDDEN");
+});

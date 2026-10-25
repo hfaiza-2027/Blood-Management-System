@@ -1,6 +1,7 @@
 /* Shared setup for data-layer tests: fake users, sessions and a call() helper. */
 import { executeDataAction } from "@/lib/server/execute";
 import { invalidate } from "@/lib/server/core";
+import { forgetSessions } from "@/lib/firebase/admin";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const fs = require("firebase-admin/firestore");
@@ -10,7 +11,7 @@ const auth = require("firebase-admin/auth");
 const headers = require("next/headers");
 
 export const db = fs.__db as { reset(): void; dump(c: string): Record<string, any>[]; collection(c: string): any };
-export const authLog = auth.__log as { updated: any[]; deleted: string[]; revoked: string[] };
+export const authLog = auth.__log as { updated: any[]; deleted: string[]; revoked: string[]; verifyCalls: number; failNext: number };
 
 export const USERS = {
   admin: { fullName: "Sana Mirza", email: "sana@bloodbridge.pk", role: "admin", bloodGroup: "A+", location: { city: "Lahore", area: "Gulberg" } },
@@ -24,6 +25,7 @@ export type Who = keyof typeof USERS | null;
 export async function resetWorld() {
   db.reset();
   invalidate(""); // the per-instance cache must not leak data between tests
+  forgetSessions();
   auth.__reset();
   for (const [uid, u] of Object.entries(USERS)) {
     await db.collection("users").doc(uid).set({ status: "active", verified: true, gender: "male", dateOfBirth: "1995-01-01", ...u });
