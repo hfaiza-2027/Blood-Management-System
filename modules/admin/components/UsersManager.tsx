@@ -28,7 +28,7 @@ const ROLE_LABEL: Record<UserRole, string> = { user: "Member", donor: "Donor", a
 
 type Edit = { fullName: string; email: string; phone: string; bloodGroup: string; city: string; area: string; role: string };
 
-export function UsersManager({ initial, initialQuery }: { initial: User[]; initialQuery: string }) {
+export function UsersManager({ initial, initialQuery, currentUserId }: { initial: User[]; initialQuery: string; currentUserId: string }) {
   const toast = useToast();
   const [users, setUsers] = useServerState(initial);
   const [role, setRole] = useState<UserRole | "any">("any");
@@ -55,13 +55,18 @@ export function UsersManager({ initial, initialQuery }: { initial: User[]; initi
 
   async function toggleActive(u: User) {
     const next: AccountStatus = u.status === "active" ? "inactive" : "active";
+    if (u.id === currentUserId) {
+      // The server refuses this too; explain it instead of showing a failed request.
+      toast.info("Admin accounts can't deactivate themselves.", "Ask another admin if this account needs to be deactivated.");
+      return;
+    }
     patch(u.id, { status: next });
     try {
       await userService.setStatus(u.id, next);
       toast.success(`${u.fullName} ${next === "active" ? "activated" : "deactivated"}.`);
-    } catch {
+    } catch (err) {
       patch(u.id, { status: u.status });
-      toast.error("Couldn't update the account. Please try again.");
+      toast.error("Couldn't update the account.", err instanceof Error ? err.message : "Please try again.");
     }
   }
 
@@ -99,14 +104,19 @@ export function UsersManager({ initial, initialQuery }: { initial: User[]; initi
 
   async function remove() {
     if (!deleting) return;
+    if (deleting.id === currentUserId) {
+      toast.info("Admin accounts can't delete themselves.", "Ask another admin if this account needs to be removed.");
+      setDeleting(null);
+      return;
+    }
     setBusy(true);
     try {
       await userService.remove(deleting.id);
       setUsers((xs) => xs.filter((u) => u.id !== deleting.id));
       toast.success(`${deleting.fullName} deleted.`);
       setDeleting(null);
-    } catch {
-      toast.error("Unable to delete the user.");
+    } catch (err) {
+      toast.error("Couldn't delete the user.", err instanceof Error ? err.message : "Please try again.");
     } finally {
       setBusy(false);
     }
@@ -124,15 +134,20 @@ export function UsersManager({ initial, initialQuery }: { initial: User[]; initi
         { label: "View", icon: <Eye className="h-4 w-4" aria-hidden />, onSelect: () => setViewing(u) },
         { label: "Edit", icon: <Pencil className="h-4 w-4" aria-hidden />, onSelect: () => openEdit(u) },
         { label: "Verify", icon: <BadgeCheck className="h-4 w-4" aria-hidden />, onSelect: () => verify(u), disabled: u.verified },
-        { label: u.status === "active" ? "Deactivate" : "Activate", icon: <Power className="h-4 w-4" aria-hidden />, onSelect: () => toggleActive(u) },
-        { label: "Delete", icon: <Trash2 className="h-4 w-4" aria-hidden />, onSelect: () => setDeleting(u), tone: "danger", disabled: u.role === "admin" },
+        // Admins can't deactivate or delete their own account, so those actions aren't offered on it.
+        ...(u.id === currentUserId
+          ? []
+          : [
+              { label: u.status === "active" ? "Deactivate" : "Activate", icon: <Power className="h-4 w-4" aria-hidden />, onSelect: () => toggleActive(u) },
+              { label: "Delete", icon: <Trash2 className="h-4 w-4" aria-hidden />, onSelect: () => setDeleting(u), tone: "danger" as const, disabled: u.role === "admin" },
+            ]),
       ]}
     />
   );
 
   const columns: Column<User>[] = [
     { key: "name", header: "Name", sortable: true, hideOnCard: true, cell: (u) => (
-      <span className="flex items-center gap-3"><Avatar name={u.fullName} size="sm" /><span className="min-w-0"><span className="block font-medium text-ink-900">{u.fullName}</span>{u.verified && <span className="text-xs text-ok-700">Verified</span>}</span></span>
+      <span className="flex items-center gap-3"><Avatar name={u.fullName} size="sm" /><span className="min-w-0"><span className="block font-medium text-ink-900">{u.fullName}{u.id === currentUserId && <Badge tone="muted" dot={false} className="ml-1.5 align-middle">You</Badge>}</span>{u.verified && <span className="text-xs text-ok-700">Verified</span>}</span></span>
     ) },
     { key: "email", header: "Email", cell: (u) => <span className="block max-w-[13rem] truncate">{u.email || <span className="text-ink-400">Not added</span>}</span> },
     { key: "phone", header: "Phone", cell: (u) => <span className="whitespace-nowrap tabular-nums">{u.phone || <span className="text-ink-400">Not added</span>}</span> },
@@ -165,7 +180,7 @@ export function UsersManager({ initial, initialQuery }: { initial: User[]; initi
           caption="Users"
           sort={list.sort}
           onSort={list.onSort}
-          cardTitle={(u) => <span className="flex items-center gap-2"><Avatar name={u.fullName} size="sm" />{u.fullName}</span>}
+          cardTitle={(u) => <span className="flex items-center gap-2"><Avatar name={u.fullName} size="sm" />{u.fullName}{u.id === currentUserId && <Badge tone="muted" dot={false} className="ml-1.5 align-middle">You</Badge>}</span>}
           cardActions={actions}
           empty={<EmptyState icon={<Users className="h-5 w-5" />} title="No users match your search" description="Try a different name, email or filter." />}
         />

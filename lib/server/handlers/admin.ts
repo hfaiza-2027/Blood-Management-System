@@ -23,7 +23,7 @@ export const adminHandlers: Record<string, Handler> = {
   },
 
   "users:setStatus": async ({ payload, me, store }) => {
-    if (payload.id === me.uid) throw new HttpError("You can't change your own account status.");
+    if (payload.id === me.uid) throw new HttpError("Admin accounts can't deactivate or suspend themselves.");
     if (!ACCOUNT_STATUSES.includes(String(payload.status))) throw new HttpError("Unknown account status.");
     await store.collection("users").doc(payload.id).set({ status: payload.status }, { merge: true });
     if (adminAuth) await adminAuth.updateUser(payload.id, { disabled: payload.status === "suspended" || payload.status === "inactive" }).catch(() => undefined);

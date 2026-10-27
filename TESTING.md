@@ -149,7 +149,7 @@ Browser 1 (admin):
 | J14 | **Settings**: turn on **Maintenance mode** → confirm | A yellow banner; reload keeps it on |
 | J15 | Member 1 tries to create a request | Error: "BloodBridge is under maintenance…". Admin turns it off again |
 | J16 | **Users**: suspend member 1 | Member 1's next action fails and they can't log in ("suspended"). Reactivate afterwards |
-| J17 | Try to suspend or delete your own admin account | Error: "You can't change your own account status." / "…delete your own account." |
+| J17 | Open the actions menu on your own row in Users | Your row shows a **You** label; Deactivate and Delete aren't offered. Other users' rows still have them |
 
 ---
 

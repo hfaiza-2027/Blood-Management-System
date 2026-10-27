@@ -76,6 +76,6 @@ test("admins can edit anyone but can't suspend, delete or demote themselves", as
   assert.equal(saved.fullName, "Ali R.");
   const self = await call("admin", "users:update", { user: { id: "admin", role: "user" } });
   assert.equal(self.role, "admin");
-  await rejects(call("admin", "users:setStatus", { id: "admin", status: "suspended" }), /own account status/);
+  await rejects(call("admin", "users:setStatus", { id: "admin", status: "suspended" }), /deactivate or suspend themselves/);
   await rejects(call("admin", "users:remove", { id: "admin" }), /own account/);
 });
