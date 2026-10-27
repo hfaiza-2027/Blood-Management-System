@@ -85,14 +85,15 @@ export function UsersManager({ initial, initialQuery, currentUserId }: { initial
   async function saveEdit(e: FormEvent) {
     e.preventDefault();
     if (!form || !editing) return;
-    const errs = validate(form, { fullName: [rules.required("a name")], email: [rules.required("an email"), rules.email()], phone: [rules.required("a phone number"), rules.phone()], bloodGroup: [rules.bloodGroup()], area: [rules.required("an area")] });
+    const errs = validate(form, { fullName: [rules.required("a name")], phone: [rules.required("a phone number"), rules.phone()], bloodGroup: [rules.bloodGroup()], area: [rules.required("an area")] });
     setFormErr(errs);
     if (hasErrors(errs)) return;
     setSaving(true);
     const updated: User = { ...editing, fullName: form.fullName, email: form.email, phone: form.phone, bloodGroup: form.bloodGroup as User["bloodGroup"], role: form.role as UserRole, location: { ...editing.location, city: form.city, area: form.area } };
     try {
-      await userService.update(updated);
-      patch(editing.id, updated);
+      // Show what the server actually saved, not what was typed.
+      const saved = await userService.update(updated);
+      patch(editing.id, saved);
       setEditing(null);
       toast.success("User updated.");
     } catch (err) {
@@ -211,12 +212,19 @@ export function UsersManager({ initial, initialQuery, currentUserId }: { initial
         {form && (
           <form id="edit-user" onSubmit={saveEdit} noValidate className="grid gap-4 sm:grid-cols-2">
             <Input id="eu-name" label="Full name" value={form.fullName} error={formErr.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} wrapperClassName="sm:col-span-2" />
-            <Input id="eu-email" label="Email" type="email" value={form.email} error={formErr.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <Input id="eu-email" label="Email" type="email" value={form.email} readOnly disabled hint="The login email can't be changed here." />
             <Input id="eu-phone" label="Phone" value={form.phone} error={formErr.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             <Select id="eu-group" label="Blood group" value={form.bloodGroup} error={formErr.bloodGroup} onChange={(e) => setForm({ ...form, bloodGroup: e.target.value })}>
               {BLOOD_GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
             </Select>
-            <Select id="eu-role" label="Role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+            <Select
+              id="eu-role"
+              label="Role"
+              value={form.role}
+              onChange={(e) => setForm({ ...form, role: e.target.value })}
+              disabled={editing?.id === currentUserId}
+              hint={editing?.id === currentUserId ? "You can't change your own role. Ask another admin to do it." : undefined}
+            >
               <option value="user">Member</option><option value="donor">Donor</option><option value="admin">Admin</option>
             </Select>
             <Select id="eu-city" label="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value, area: "" })}>

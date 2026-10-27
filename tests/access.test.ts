@@ -74,8 +74,18 @@ test("members can edit only safe fields on their own profile", async () => {
 test("admins can edit anyone but can't suspend, delete or demote themselves", async () => {
   const saved = await call("admin", "users:update", { user: { id: "ali", fullName: "Ali R." } });
   assert.equal(saved.fullName, "Ali R.");
-  const self = await call("admin", "users:update", { user: { id: "admin", role: "user" } });
+  // Changing your own role is refused with a clear message instead of being silently ignored.
+  await rejects(call("admin", "users:update", { user: { id: "admin", role: "user" } }), /can't change your own role/);
+  // Saving the edit form with your role unchanged still works.
+  const self = await call("admin", "users:update", { user: { id: "admin", role: "admin", fullName: "Sana M." } });
   assert.equal(self.role, "admin");
+  assert.equal(self.fullName, "Sana M.");
+  // Admins can change other people's roles.
+  assert.equal((await call("admin", "users:update", { user: { id: "ali", role: "admin" } })).role, "admin");
+  await rejects(call("admin", "users:update", { user: { id: "ali", role: "owner" } }), /valid role/);
+  // The login email can't be changed here; sending the same email is fine.
+  await rejects(call("admin", "users:update", { user: { id: "ali", email: "new@example.com" } }), /login email/);
+  await call("admin", "users:update", { user: { id: "ali", email: "ALI@example.com", phone: "03111234567" } });
   await rejects(call("admin", "users:setStatus", { id: "admin", status: "suspended" }), /deactivate or suspend themselves/);
   await rejects(call("admin", "users:remove", { id: "admin" }), /own account/);
 });

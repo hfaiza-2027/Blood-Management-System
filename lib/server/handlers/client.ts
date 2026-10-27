@@ -33,7 +33,16 @@ export const clientHandlers: Record<string, Handler> = {
     const allowed = ["fullName", "phone", "bloodGroup", "gender", "dateOfBirth", "address", "location", "emergencyContact", "avatarUrl", "preferences"];
     const patch: Payload = {};
     for (const k of isAdmin ? Object.keys(u) : allowed) if (k !== "id" && u[k] !== undefined) patch[k] = u[k];
-    if (isAdmin && id === me.uid) delete patch.role; // never demote yourself by accident
+    // Refuse changes that can't be made here, rather than silently ignoring them and reporting success.
+    const current = await one("users", id);
+    if (!current) throw new HttpError("NOT_FOUND");
+    if (patch.role !== undefined) {
+      if (!["user", "donor", "admin"].includes(String(patch.role))) throw new HttpError("Choose a valid role.");
+      if (id === me.uid && patch.role !== (current.role ?? "user")) throw new HttpError("You can't change your own role. Ask another admin to do it.");
+    }
+    if (patch.email !== undefined && String(patch.email).trim().toLowerCase() !== String(current.email ?? "").trim().toLowerCase()) {
+      throw new HttpError("The login email can't be changed here.");
+    }
     delete patch.email; // the login email is managed by Firebase Authentication
     checkProfilePatch(patch);
     if (patch.location) patch.location = { city: patch.location.city, area: patch.location.area, point: pointFor(patch.location.city, patch.location.area) };
