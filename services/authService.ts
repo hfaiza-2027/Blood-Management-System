@@ -22,21 +22,23 @@ export interface LoginInput { email: string; password: string }
 export interface RegisterInput { fullName: string; email: string; phone: string; password: string; city: string; area: string; bloodGroup: string; dateOfBirth: string; gender: string; address: string }
 
 /** Turn Firebase error codes into sentences people can act on. */
-export function authMessage(e: unknown, fallback = "Something went wrong. Try again."): string {
+export function authMessage(e: unknown, fallback = "Something went wrong. Please try again."): string {
   const code = (e as { code?: string })?.code ?? "";
+  // Wrong password and unknown email share one message, so the form never reveals which emails are registered.
+  const signInFailed = "Incorrect email or password. Please try again.";
   const map: Record<string, string> = {
-    "auth/invalid-credential": "That email and password don't match. Check them and try again.",
-    "auth/wrong-password": "That email and password don't match. Check them and try again.",
-    "auth/user-not-found": "There's no account with that email. Create one instead.",
-    "auth/invalid-email": "Enter a valid email address.",
-    "auth/email-already-in-use": "An account with this email already exists. Log in instead.",
-    "auth/weak-password": "Choose a stronger password (at least 8 characters with a number).",
-    "auth/too-many-requests": "Too many attempts. Wait a few minutes, then try again.",
-    "auth/network-request-failed": "You appear to be offline. Check your connection.",
-    "auth/user-disabled": "This account has been suspended. Contact support.",
-    "auth/requires-recent-login": "For security, log out and log in again before changing your password.",
-    "auth/expired-action-code": "This link has expired. Request a new one.",
-    "auth/invalid-action-code": "This link is invalid or has already been used. Request a new one.",
+    "auth/invalid-credential": signInFailed,
+    "auth/wrong-password": signInFailed,
+    "auth/user-not-found": signInFailed,
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/email-already-in-use": "An account with this email already exists. Please log in instead.",
+    "auth/weak-password": "Please choose a stronger password with at least 8 characters, including a number.",
+    "auth/too-many-requests": "Too many unsuccessful attempts. Please wait a few minutes and try again, or reset your password.",
+    "auth/network-request-failed": "Unable to connect. Please check your internet connection and try again.",
+    "auth/user-disabled": "This account has been suspended. Please contact support for assistance.",
+    "auth/requires-recent-login": "For your security, please log in again before changing your password.",
+    "auth/expired-action-code": "This link has expired. Please request a new one.",
+    "auth/invalid-action-code": "This link is invalid or has already been used. Please request a new one.",
   };
   if (map[code]) return map[code];
   return e instanceof Error && !code ? e.message : fallback;
@@ -65,7 +67,7 @@ export const authService = {
       return { user: { ...user, id: cred.user.uid }, token, expiresAt: new Date(Date.now() + 5 * 86_400_000).toISOString() };
     } catch (e) {
       if (a.currentUser) await signOut(a).catch(() => undefined);
-      throw new ApiError(e instanceof ApiError ? e.message : authMessage(e, "We couldn't log you in. Try again."), 401);
+      throw new ApiError(e instanceof ApiError ? e.message : authMessage(e, "We couldn't log you in. Please try again."), 401);
     }
   },
 

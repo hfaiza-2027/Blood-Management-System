@@ -52,7 +52,7 @@ export function LoginForm() {
       router.replace(postLoginPath(session.user.role, next));
       router.refresh();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "We couldn't log you in. Try again.");
+      setFormError(err instanceof Error ? err.message : "We couldn't log you in. Please try again.");
       setLoading(false);
     }
   }
